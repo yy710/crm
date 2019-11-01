@@ -19,7 +19,7 @@ const httpsServer = https.createServer({
     cert: fs.readFileSync(config.certFile)
 }, app);
 httpsServer.listen(config.httpsPort, function () {
-    console.log('https server is running on port ', port);
+    console.log('https server is running on port ', config.httpsPort);
 });
 
 httpServer.on('error', onError);
@@ -57,7 +57,7 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
-    let addr = server.address();
+    let addr = httpServer.address();
     let bind = typeof addr === 'string' ?
         'pipe ' + addr :
         'port ' + addr.port;
