@@ -1,0 +1,153 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.2/lib/index.css">
+    <title>谊众透明车间</title>
+</head>
+
+<body>
+    <div id="app">
+        <!-- <van-button @click.native="handleClick">按钮</van-button> -->
+        <van-collapse v-model="activeNames" accordion>
+            <van-collapse-item name="1">
+                <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                    <span>云A00001</span>
+                    <van-tag round type="primary">忠诚客户</van-tag>
+                    <van-tag round type="success">正在维修</van-tag>
+                    <div style="width: 100px;">
+                        <van-progress :percentage="60" stroke-width="8" color="#f2826a" />
+                    </div>
+
+                </div>
+                <van-row gutter="20">
+                    <van-col span="6">姓名：赵云</van-col>
+                    <van-col span="10">电话：13700555356</van-col>
+                    <van-col span="8">性别：男</van-col>
+                </van-row>
+                <van-row gutter="20">
+                    <van-col span="6">车型：迈腾</van-col>
+                    <van-col span="10">行驶里程：5.5万公里</van-col>
+                    <van-col span="8">服务顾问：曹操</van-col>
+                </van-row>
+            </van-collapse-item>
+
+            <van-collapse-item name="2">
+                <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                    <span>云A00002</span>
+                    <van-tag round type="primary">普通客户</van-tag>
+                    <van-tag round type="success">等待结算</van-tag>
+                    <div style="width: 100px;">
+                        <van-progress :percentage="100" stroke-width="8" color="#7232dd" />
+                    </div>
+                </div>
+                <van-row gutter="20">
+                    <van-col span="6">姓名：张飞</van-col>
+                    <van-col span="10">电话：13700555356</van-col>
+                    <van-col span="8">性别：女</van-col>
+                </van-row>
+                <van-row gutter="20">
+                    <van-col span="6">车型：速腾</van-col>
+                    <van-col span="10">行驶里程：6.5万公里</van-col>
+                    <van-col span="8">服务顾问：张辽</van-col>
+                </van-row>
+            </van-collapse-item>
+
+            <van-collapse-item name="3">
+                    <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                        <span>云A00003</span>
+                        <van-tag round type="primary">新客户</van-tag>
+                        <van-tag round type="success">已结算等接车</van-tag>
+                        <div style="width: 100px;">
+                            <van-progress :percentage="100" stroke-width="8" inactive />
+                        </div>
+                    </div>
+                    <van-row gutter="20">
+                        <van-col span="6">姓名：黄忠</van-col>
+                        <van-col span="10">电话：13700555356</van-col>
+                        <van-col span="8">性别：男</van-col>
+                    </van-row>
+                    <van-row gutter="20">
+                        <van-col span="6">车型：捷达</van-col>
+                        <van-col span="10">行驶里程：15万公里</van-col>
+                        <van-col span="8">服务顾问：司马懿</van-col>
+                    </van-row>
+                </van-collapse-item>
+
+                <van-collapse-item name="4">
+                        <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                            <span>云A00001</span>
+                            <van-tag round type="primary">一般客户</van-tag>
+                            <van-tag round type="success">正在接待</van-tag>
+                            <div style="width: 100px;">
+                                <van-progress :percentage="0" stroke-width="8" color="#f2826a" />
+                            </div>
+        
+                        </div>
+                        <van-row gutter="20">
+                            <van-col span="6">姓名：关羽</van-col>
+                            <van-col span="10">电话：13700555356</van-col>
+                            <van-col span="8">性别：男</van-col>
+                        </van-row>
+                        <van-row gutter="20">
+                            <van-col span="6">车型：迈腾</van-col>
+                            <van-col span="10">行驶里程：55万公里</van-col>
+                            <van-col span="8">服务顾问：张辽</van-col>
+                        </van-row>
+                    </van-collapse-item>
+
+                    <van-collapse-item name="5">
+                            <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                                <span>云A00005</span>
+                                <van-tag round type="primary">忠诚客户</van-tag>
+                                <van-tag round type="success">正在维修</van-tag>
+                                <div style="width: 100px;">
+                                    <van-progress :percentage="30" stroke-width="8" color="#f2826a" />
+                                </div>
+            
+                            </div>
+                            <van-row gutter="20">
+                                <van-col span="6">姓名：马超</van-col>
+                                <van-col span="10">电话：13700555356</van-col>
+                                <van-col span="8">性别：男</van-col>
+                            </van-row>
+                            <van-row gutter="20">
+                                <van-col span="6">车型：速腾</van-col>
+                                <van-col span="10">行驶里程：5.5万公里</van-col>
+                                <van-col span="8">服务顾问：曹操</van-col>
+                            </van-row>
+                        </van-collapse-item>
+        </van-collapse>
+    </div>
+</body>
+
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vant@2.2/lib/vant.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: () => {
+            return {
+                activeNames: ['2']
+            }
+        },
+        methods: {
+            handleClick: function () {
+                // 调用函数组件，弹出一个 Toast
+                vant.Dialog.alert({
+                    //title: '提示',
+                    message: '此功能正在加紧开发中...'
+                }).then(() => {
+                    // on close
+                });
+                //vant.Toast('此功能正在加紧开发中...');
+            }
+        }
+    })
+</script>
+
+</html>

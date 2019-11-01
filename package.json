@@ -1,0 +1,22 @@
+{
+  "name": "npm",
+  "version": "1.0.0",
+  "description": "crm for auto",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "element-ui": "^2.6.3",
+    "express": "^4.16.4",
+    "mongodb": "^3.1.13",
+    "multer": "^1.4.1",
+    "vue": "^2.6.10",
+    "vue-server-renderer": "^2.6.10",
+    "xlsx": "^0.14.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "yy710",
+  "license": "ISC"
+}

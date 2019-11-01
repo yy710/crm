@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.2/lib/index.css">
+    <title>谊众OA系统</title>
+</head>
+
+<body>
+    <div id="app">
+        <van-image width="25rem" height="25rem" fit="contain" src="./timg2.jpeg" />
+        <!-- <van-count-down :time="time" format="DD 天 HH 时 mm 分 ss 秒" /> -->
+    </div>
+</body>
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vant@2.2/lib/vant.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: () => {
+            return {
+                time: 30 * 60 * 60 * 1000
+            }
+        },
+        methods: {
+            handleClick: function () {
+                // 调用函数组件，弹出一个 Toast
+                vant.Dialog.alert({
+                    //title: '提示',
+                    message: '此功能正在加紧开发中...'
+                }).then(() => {
+                    // on close
+                });
+                //vant.Toast('此功能正在加紧开发中...');
+            }
+        }
+    })
+</script>
+
+</html>

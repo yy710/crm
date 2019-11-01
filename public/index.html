@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>iview example</title>
+    <link rel="stylesheet" type="text/css" href="./styles/iview.css">
+    <script type="text/javascript" src="./vue.min.js"></script>
+    <script type="text/javascript" src="./iview.min.js"></script>
+    <script type="text/javascript" src="./axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <Upload multiple type="drag" action="./upload" name="excel" :on-success="uploadSuccess">
+            <div style="padding: 20px 0">
+                <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+                <p>{{text1}}</p>
+            </div>
+        </Upload>
+        <Tag v-for="item in counts" :key="item" :name="item" closable @on-close="handleClose2">{{ item }}</Tag>
+        <i-button icon="ios-add" type="dashed" size="small" @click="handleAdd">添加标签</i-button>
+        <i-button @click="show">查看数据</i-button>
+        <div v-for="(buttons, index) in buttonss" :key="buttons" v-show="!visible[index]" style="display:flex;align-items:baseline;height:25px">
+            <span>{{buttons.title}}</span>
+            <div>
+                <i-button v-for="item in buttons.buttons" :key="item" type="text" @click="handleAddTag(item)">{{item}}
+                </i-button>
+            </div>
+        </div>
+        <i-table :columns="columns10" :data="data10" width="500" height="200" border></i-table>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                visible: [],
+                text1: "请点击或把文件拖到这里。。。",
+                columns10: [{
+                        title: '用户姓名',
+                        key: '用户姓名',
+                        width: 100,
+                        fixed: "left"
+                    },
+                    {
+                        title: '用户手机',
+                        key: '用户手机',
+                        width: 200
+                    },
+                    {
+                        title: '车牌号',
+                        key: '车牌号',
+                        width: 300
+                    }
+                ],
+                data10: [],
+                counts: ["三个月未进厂", "女性", "昂克赛拉"],
+                buttonss: [{
+                    title: "购车时间",
+                    buttons: ["111", "222", "3333"]
+                }, {
+                    title: "性别",
+                    buttons: ["男", "女"]
+                }]
+            },
+            methods: {
+                handleAddTag: function (res) {
+                    console.log(res);
+                    this.counts.push(res);
+                    this.visible = false;
+                },
+                show: function () {
+                    axios.get('./get-table').then(res => this.data10 = res.data)
+                },
+                uploadSuccess: function (response, file, fileList) {
+                    console.log(response);
+                    this.text1 = "文件上传成功";
+                },
+                handleAdd() {
+                    if (this.counts.length) {
+                        this.counts.push(this.counts[this.counts.length - 1] + 1);
+                    } else {
+                        this.counts.push(0);
+                    }
+                },
+                handleClose2(event, name) {
+                    const index = this.counts.indexOf(name);
+                    this.counts.splice(index, 1);
+                    this.visible = true;
+                }
+            }
+        })
+    </script>
+
+    <style>
+        .aaa {
+            padding: 0px;
+            margin: 0px;
+            height: 25px;
+            width: 500px;
+            border: 1px;
+        }
+    </style>
+</body>
+
+</html>
