@@ -64,3 +64,4 @@ typings/
 .next
 
 .vscode/
+config.json

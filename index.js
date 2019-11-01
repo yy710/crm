@@ -1,19 +1,30 @@
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const config = require('./config.json');
 
 const app = express();
 const router = express.Router();
-let server = http.createServer(app);
+const httpServer = http.createServer(app);
 
-app.use(function(req,res,next){
+app.use(function (req, res, next) {
     //console.log(req.query);
     next();
 });
 app.use(express.static('public'))
 
-server.on('error', onError);
-server.on('listening', onListening);
-server.listen(80);
+const httpsServer = https.createServer({
+    key: fs.readFileSync(config.keyFile),
+    cert: fs.readFileSync(config.certFile)
+}, app);
+httpsServer.listen(config.httpsPort, function () {
+    console.log('https server is running on port ', port);
+});
+
+httpServer.on('error', onError);
+httpServer.on('listening', onListening);
+httpServer.listen(config.httpPort);
 
 /**
  * Event listener for HTTP server "error" event.
