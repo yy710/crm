@@ -5,7 +5,7 @@ const fs = require('fs');
 const config = require('./config.json');
 
 const app = express();
-const router = express.Router();
+const routerYz = require('./routers/yz')(express);
 const httpServer = http.createServer(app);
 
 app.use(function (req, res, next) {
@@ -13,14 +13,15 @@ app.use(function (req, res, next) {
     next();
 });
 app.use(express.static('public'))
+app.use('/yz', routerYz);
 
-const httpsServer = https.createServer({
+/* const httpsServer = https.createServer({
     key: fs.readFileSync(config.keyFile),
     cert: fs.readFileSync(config.certFile)
 }, app);
 httpsServer.listen(config.httpsPort, function () {
     console.log('https server is running on port ', config.httpsPort);
-});
+}); */
 
 httpServer.on('error', onError);
 httpServer.on('listening', onListening);
