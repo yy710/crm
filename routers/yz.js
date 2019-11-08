@@ -4,8 +4,8 @@ module.exports = function (express) {
     
     router.use('/referred', routerReferred)
 
-    routerReferred.use('/add-new-case', (req, res, next) => {
-        res.send("aaa");
+    routerReferred.use('/new', (req, res, next) => {
+        res.json({msg: "ok!"});
     });
 
     return router;

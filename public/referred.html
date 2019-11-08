@@ -43,6 +43,7 @@
     const routes = [
         { path: '/foo', component: Foo },
         { path: '/bar', component: Bar },
+        // 非 webpack 开发模式不支持单文件组件引入，在此使用了第三方库 httpVueLoader，但 vue 内容需作调整
         { path: '/new-referred', component: httpVueLoader('./new-referred.vue') },
         { path: '/stat-referred', component: httpVueLoader('./list-referred.vue')}
     ]
