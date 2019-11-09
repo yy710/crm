@@ -5,6 +5,7 @@ module.exports = function (express) {
     router.use('/referred', routerReferred)
 
     routerReferred.use('/new', (req, res, next) => {
+        console.log("req.query: \n", JSON.stringify(req.query, null, 4));
         res.json({msg: "ok!"});
     });
 

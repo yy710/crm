@@ -1,12 +1,14 @@
 const assert = require('assert');
 const express = require('express');
 const http = require('http');
-const https = require('https');
-const fs = require('fs');
+//const https = require('https');
+//const fs = require('fs');
+const cors = require('cors');
 const MongoClient = require('mongodb').MongoClient;
 const config = require('./config.json');
 
 const app = express();
+app.use(cors());
 const routerYz = require('./routers/yz')(express);
 const httpServer = http.createServer(app);
 
@@ -16,7 +18,8 @@ app.use(function (req, res, next) {
     next();
 });
 app.use(express.static('public'))
-app.use('/yz', initDb(config.crmDbUrl), routerYz);
+//app.use('/yz', initDb(config.crmDbUrl), routerYz);
+app.use('/yz', routerYz);
 
 /* const httpsServer = https.createServer({
     key: fs.readFileSync(config.keyFile),
