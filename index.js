@@ -5,6 +5,7 @@ const http = require('http');
 //const fs = require('fs');
 const cors = require('cors');
 const MongoClient = require('mongodb').MongoClient;
+const axios = require('axios');
 const config = require('./config.json');
 
 const app = express();
@@ -85,7 +86,7 @@ class Referred {
     }
 
     commit(mutation) {
-        
+
     }
 
     show() {
@@ -94,6 +95,13 @@ class Referred {
 
     get() {
 
+    }
+
+    getNewAccessToken() {
+        return axios
+            .get(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpid}&corpsecret=${config.referredSecret}`)
+            .then()
+            .catch();
     }
 }
 
