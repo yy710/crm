@@ -1,3 +1,4 @@
+// 载入 npm 模块
 const assert = require('assert');
 const express = require('express');
 const http = require('http');
@@ -6,21 +7,41 @@ const http = require('http');
 const cors = require('cors');
 const MongoClient = require('mongodb').MongoClient;
 const axios = require('axios');
+
+// 载入配置文件
 const config = require('./config.json');
 
-const app = express();
-app.use(cors());
-const routerYz = require('./routers/yz')(express);
-const httpServer = http.createServer(app);
+// 载入自定义模块
+const AccessToken = require('./access_token.js');
+const Referred = require('./referred.js');
 
+// 创建 http 服务
+const app = express();
+const httpServer = http.createServer(app);
+// 允许跨域访问
+app.use(cors());
 app.use(function (req, res, next) {
     //console.log(req.query);
     req.data = {};
     next();
 });
 app.use(express.static('public'))
-//app.use('/yz', initDb(config.crmDbUrl), routerYz);
-app.use('/yz', routerYz);
+
+// 初始化 crm 系统全局变量
+let crmDb = {};
+let referredAccessToken = {};
+initDb(config.crmDbUrl, db => {
+    crmDb = db;
+    referredAccessToken = new AccessToken(config.corpid, config.referredSecret, crmDb.collection('access_tokens'));
+});
+
+// 引入 crm 路由
+const routerYz = require('./routers/yz')(express);
+app.use('/yz', (req, res, next) => {
+    req.data.db = crmDb;
+    req.data.accessToken = referredAccessToken;
+    next();
+}, routerYz);
 
 /* const httpsServer = https.createServer({
     key: fs.readFileSync(config.keyFile),
@@ -30,113 +51,24 @@ httpsServer.listen(config.httpsPort, function () {
     console.log('https server is running on port ', config.httpsPort);
 }); */
 
+// 监听服务端口
 httpServer.on('error', onError);
 httpServer.on('listening', onListening);
 httpServer.listen(config.httpPort);
 
-const json1 = {
-    potential_customer: { id: 1, name: "关羽", phone: "13768667656" },
-    dispatch_employ: { id: 5, name: "赵云", phone: "12565678767" },
-    from_customer: { id: 6, name: "刘备", phone: "12565767876" },
-    source_type: "转介绍",
-    state: "new",
-    tracks: [
-        {
-            action: "create",
-            update_time: new Date(),
-            operator: { id: 12, name: "张飞", phone: "13812567656" },
-            data: {}
-        }
-    ]
-};
-
-class Referred {
-    constructor(data = {}) {
-        /* this.potential_customer = { id: 1, name: "关羽", phone: "13768667656" };
-        this.dispatch_employ = { id: 5, name: "赵云", phone: "12565678767" };
-        this.from_customer = { id: 6, name: "刘备", phone: "12565767876" };
-        this.source_type = "转介绍";
-        this.state = "new";
-        this.tracks = [
-            {
-                action: "create",
-                update_time: new Date(),
-                operator: { id: 12, name: "张飞", phone: "13812567656" },
-                data: {}
-            }
-        ]; */
-
-        this.data = data;
-        this.actions = {};
-        this.mutations = {
-            accept: () => {
-                this.data.tracks.push({
-                    action: "accept",
-                    update_time: new Date(),
-                    operator: { id: 11, name: "马超", phone: "111" },
-                    data: this.data
-                });
-                this.state = "accept";
-            }
-        };
-    }
-
-    dispatch() {
-
-    }
-
-    commit(mutation) {
-
-    }
-
-    show() {
-        console.log(JSON.stringify(this.data, null, 4));
-    }
-
-    get() {
-
-    }
-
-    getNewAccessToken() {
-        return axios
-            .get(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpid}&corpsecret=${config.referredSecret}`)
-            .then()
-            .catch();
-    }
-}
-
-const rf = new Referred(json1);
-rf.show();
 /**
  * middleware for mongodb
  * @param dbUrl
  * @returns {Function} req.data.db
  */
-function initDb(dbUrl) {
-    return function (req, res, next) {
-        // static method
-        MongoClient.connect(dbUrl, { useUnifiedTopology: true }, function (err, client) {
-            assert.equal(null, err);
-            console.log("Connected successfully to mongodb server");
-            req.data.db = client.db();
-            next();
-            //client.close();
-        });
-
-        /* // Connection URL
-        const url = 'mongodb://localhost:27017';
-        // Database Name
-        const dbName = 'myproject';
-        // Create a new MongoClient
-        const client = new MongoClient(url);
-        // Use connect method to connect to the Server
-        client.connect(function (err) {
-            assert.equal(null, err);
-            console.log("Connected successfully to server");
-            const db = client.db(dbName);
-            client.close();
-        }); */
-    };
+function initDb(dbUrl, callback) {
+    // static method
+    MongoClient.connect(dbUrl, { useUnifiedTopology: true }, function (err, client) {
+        assert.equal(null, err);
+        console.log("Connected successfully to mongodb server");
+        callback(client.db());
+        //client.close();
+    });
 }
 
 /**
