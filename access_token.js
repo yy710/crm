@@ -1,58 +1,63 @@
 const axios = require('axios');
-const config = require('./config.json');
+const assert = require('assert');
 
-/* function _getNewAccessToken(corpid) {
-    return function (corpsecret) {
-        return function (collection) {
-            return axios
-                .get(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpid}&corpsecret=${config.referredSecret}`)
-                .then(r => {
-                    const access_token = r.access_token;
-                })
-                .catch();
-        }
-    };
-} 
-const getNewAccessToken = _getNewAccessToken(config.corpid);
-const getReferredAccessToken = getNewAccessToken(config.referredSecret);
-getReferredAccessToken(col); */
-
-class AccessToken {
-    constructor(corpid, corpsecret, col) {
-        this.corpid = corpid;
-        this.corpsecret = corpsecret;
-        this.col = col;
-        this.access_token = {};
-    }
-
-
-    findInCache(){
-
-    }
-
+module.exports = {
     find() {
-        if (this.access_token) {
-
-            return this.access_token
+        return function (req, res, next) {
+            if (global.token) {
+                req.data.saveToken = false;
+                console.log("find token in global:", global.token);
+                next();
+            }
+            else req.data.db.collection('tokens')
+                .find({ agentid: req.data.config.referred.agentid })
+                .next()
+                .then(doc => {
+                    console.log("find token in db: ", doc);
+                    global.token = doc;
+                    next();
+                })
+                .catch(err => console.log(err));
         };
-        return this.col
-            .find({ corpsecret: this.corpsecret })
-            .next()
-            .catch(err => console.log(err));
+    },
+
+    checkout() {
+        return function (req, res, next) {
+            if (global.token) {
+                const diffTime = new Date().getTime() - global.token.time;
+                if (diffTime >= global.token.expires_in * 1000) {
+                    console.log("token expired!");
+                    global.token = null;
+                }
+            }
+            next();
+        };
+    },
+
+    getNewToken() {
+        return (req, res, next) => {
+            if (global.token) next();
+            else {
+                axios.get(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${req.data.config.corpid}&corpsecret=${req.data.config.referred.secret}`)
+                    .then(result => {
+                        console.log("axios.get(): ", result.data);
+                        assert.equal(0, result.data.errcode);
+                        let token = result.data;
+                        token.agentid = req.data.config.referred.agentid;
+                        token.time = new Date().getTime();
+                        global.token = token;
+                        req.data.saveToken = true;
+                        next();
+                    }).catch(err => console.log(err));
+            }
+        };
+    },
+
+    saveToDb() {
+        return (req, res, next) => {
+            if (req.data.saveToken)
+                req.data.db.collection('tokens').replaceOne({ agentid: req.data.config.referred.agentid }, global.token, { upsert: 1 }).catch(err => console.log("saved to db err: ", err));
+            next();
+        };
     }
-
-    get() {
-        this._find().then(this._checkout);
-    }
-
-    _checkout(p) {
-        p.then(r => {
-            if (r.access_token) return false;
-            else if ((new Date()).getTime() - r.timestamp >= r.expire) return false;
-            else this.set(r.access_token);
-
-        })
-    }
-}
-
-module.exports = AccessToken;
+};

@@ -21,27 +21,15 @@ const httpServer = http.createServer(app);
 // 允许跨域访问
 app.use(cors());
 app.use(function (req, res, next) {
-    //console.log(req.query);
     req.data = {};
+    req.data.config = config;
     next();
 });
 app.use(express.static('public'))
 
-// 初始化 crm 系统全局变量
-let crmDb = {};
-let referredAccessToken = {};
-initDb(config.crmDbUrl, db => {
-    crmDb = db;
-    referredAccessToken = new AccessToken(config.corpid, config.referredSecret, crmDb.collection('access_tokens'));
-});
-
 // 引入 crm 路由
 const routerYz = require('./routers/yz')(express);
-app.use('/yz', (req, res, next) => {
-    req.data.db = crmDb;
-    req.data.accessToken = referredAccessToken;
-    next();
-}, routerYz);
+app.use('/yz', initDb(config.crmDbUrl), routerYz);
 
 /* const httpsServer = https.createServer({
     key: fs.readFileSync(config.keyFile),
@@ -61,14 +49,22 @@ httpServer.listen(config.httpPort);
  * @param dbUrl
  * @returns {Function} req.data.db
  */
-function initDb(dbUrl, callback) {
-    // static method
-    MongoClient.connect(dbUrl, { useUnifiedTopology: true }, function (err, client) {
-        assert.equal(null, err);
-        console.log("Connected successfully to mongodb server");
-        callback(client.db());
-        //client.close();
-    });
+function initDb(dbUrl) {
+    return function (req, res, next) {
+        if (!global.crmdb) {
+            // static method
+            MongoClient.connect(dbUrl, { useUnifiedTopology: true }, function (err, client) {
+                assert.equal(null, err);
+                console.log("Connected successfully to mongodb server");
+                global.crmdb = req.data.db = client.db();
+                //client.close();
+                next();
+            });
+        } else {
+            req.data.db = global.crmdb;
+            next();
+        }
+    };
 }
 
 /**
