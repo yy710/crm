@@ -26,7 +26,7 @@ module.exports = {
             if (global.jsapi_ticket) {
                 const diffTime = new Date().getTime() - global.jsapi_ticket.time;
                 if (diffTime >= global.jsapi_ticket.expires_in * 1000) {
-                    console.log("token expired!");
+                    console.log("jsapi_ticket expired!");
                     global.jsapi_ticket = null;
                 }
             }

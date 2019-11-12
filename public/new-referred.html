@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        #app {
+            font-family: "Avenir", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* text-align: center; */
+            color: #2c3e50;
+            /* margin-top: 60px; */
+        }
+    </style>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="./styles/vant.css">
+    <title>谊众CRM系统-客户转介绍管理-录入新的转介绍信息</title>
+</head>
+
+<body>
+    <div id="app">
+        <van-nav-bar title="录入新的转介绍信息" left-text="取消" right-text="获得我的信息" left-arrow @click-left="onClickLeft"
+            @click-right="onClickRight"></van-nav-bar>
+        <van-cell-group title="请输入客户信息(必填)：">
+            <van-field v-model="customerName" required label="客户姓名" left-icon="contact" placeholder="请输入客户姓名">
+            </van-field>
+            <van-field v-model="customerPhone" required label="客户手机号" placeholder="请输入客户手机号" left-icon="phone-o">
+            </van-field>
+        </van-cell-group>
+        <van-radio-group v-model="source">
+            <van-cell-group title="请选择信息来源：">
+                <van-cell title="来源 1" clickable @click="radio = '1'">
+                    <van-radio slot="right-icon" name="1"></van-radio>
+                </van-cell>
+                <van-cell title="来源 2" clickable @click="radio = '2'">
+                    <van-radio slot="right-icon" name="2"></van-radio>
+                </van-cell>
+            </van-cell-group>
+        </van-radio-group>
+        <van-cell-group title="请输入介绍人信息：">
+            <van-field v-model="fromName" label="介绍人姓名" placeholder="请输入介绍人姓名"></van-field>
+            <van-field v-model="fromPhone" label="介绍人手机号" placeholder="请输入介绍人手机号"></van-field>
+        </van-cell-group>
+        <van-cell>
+            <van-button type="primary" style="width: 100%" @click="sendNewReferred">确认保存</van-button>
+        </van-cell>
+        <van-cell><span>code:{{ code }}</span></van-cell>
+    </div>
+</body>
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script type="text/javascript" src="./vue.min.js"></script>
+<script type="text/javascript" src="./vue-router.js"></script>
+<script type="text/javascript" src="./httpVueLoader.js"></script>
+<script type="text/javascript" src="./vant.min.js"></script>
+<script type="text/javascript" src="./axios.min.js"></script>
+<script type="text/javascript" src="./jweixin-1.2.0.js"></script>
+<script>
+    const corpID = "ww29233ad949e808bf";
+    function urlencode(str) {
+        str = (str + '').toString();
+        return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
+            replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
+    }
+
+    const routes = [];
+    const router = new VueRouter({ mode: 'history', routes });
+
+    const app = new Vue({
+        el: "#app",
+        router,
+        data: {
+            customerName: null,
+            customerPhone: null,
+            source: 2,
+            fromName: null,
+            fromPhone: null,
+            code: 0
+        },
+        updated: function () {
+            this.code = this.$route.params.code;
+
+            axios.get('/yz/referred/get-jsapi-ticket')
+                .then(res => {
+                    ticket = res.data;
+                    console.log(ticket);
+                    wx.config({
+                        beta: true, // 必须这么写，否则wx.invoke调用形式的jsapi会有问题
+                        debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+                        appId: corpID, // 必填，企业微信的corpID
+                        timestamp: ticket.timestamp, // 必填，生成签名的时间戳
+                        nonceStr: ticket.nonceStr, // 必填，生成签名的随机串
+                        signature: ticket.signature, // 必填，签名，见 附录-JS-SDK使用权限签名算法
+                        jsApiList: ["selectEnterpriseContact"] // 必填，需要使用的JS接口列表，凡是要调用的接口都需要传进来
+                    });
+                })
+                .catch(err => console.log(err));
+        },
+        props: {
+            employer: Object
+        },
+        methods: {
+            onClickLeft() {
+                Toast("返回");
+            },
+            onClickRight() {
+                const redirectUri = urlencode('http://www.all2key.cn/new-referred.html');
+                const state = '';
+                const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
+                window.location.href = url;
+            },
+            sendNewReferred() {
+                //window.console.log(this.$data);
+                return axios
+                    .get("/yz/referred/new", {
+                        params: {
+                            customerName: this.customerName,
+                            customerPhone: this.customerPhone,
+                            source: this.source,
+                            fromName: this.fromName,
+                            fromPhone: this.fromPhone
+                        }
+                    })
+                    .then(r => Toast.success("保存成功！"))
+                    .catch(err => Toast.fail("保存失败！"));
+            }
+        }
+    })
+</script>
+
+</html>

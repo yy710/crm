@@ -25,7 +25,7 @@ module.exports = function (express) {
     router.use('/referred', routerReferred)
 
     routerReferred.use('/new', (req, res, next) => {
-        // console.log("req.data: \n", req.data);
+        console.log("req.query: \n", req.query);
         res.json({ msg: "ok!" });
     });
 
@@ -41,7 +41,9 @@ module.exports = function (express) {
         routerAccessToken,
         routerJsapiTicket,
         (req, res, next) => {
-            res.json(sign(global.jsapi_ticket.ticket, 'http://example.com'));
+            const s = sign(global.jsapi_ticket.ticket, 'http://www.all2key.cn/new-referred.html');
+            console.log("sign(): ", s);
+            res.json(s);
         }
     );
 
