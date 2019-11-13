@@ -2,6 +2,7 @@ const accessToken = require('../access_token');
 const jsapiTicket = require('../jsapi_ticket');
 const getUser = require('../get-user');
 const sign = require('../sign');
+const referred = require('../referred');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -25,11 +26,16 @@ module.exports = function (express) {
 
     router.use('/referred', routerReferred)
 
-    routerReferred.use('/new', (req, res, next) => {
-        req.query.operator = JSON.parse(req.query.operator); 
-        console.log("req.query: \n", req.query);
-        res.json({ msg: "ok!" });
-    });
+    routerReferred.use('/new',
+        (req, res, next) => {
+            req.query.operator = JSON.parse(req.query.operator);
+            console.log("req.query: \n", req.query);
+            next();
+        },
+        referred.new(),
+        (req, res, next) => {
+            res.json({ err: 0, msg: "保存成功！" });
+        });
 
     routerReferred.use('/getToken',
         routerAccessToken,

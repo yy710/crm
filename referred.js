@@ -1,3 +1,7 @@
+const axios = require('axios');
+const assert = require('assert');
+const config = require('./config.json');
+
 // 数据结构
 const data = {
     // 识别ID
@@ -68,30 +72,50 @@ module.exports = {
                     action: "new",
                     update_time: new Date(),
                     operator: req.query.operator,
-                    data: {}
+                    data: req.query
                 }]
             };
-        }
+            const textCard = {
+                "touser" : "YuChunJian",
+                //"toparty" : "PartyID1 | PartyID2",
+                //"totag" : "TagID1 | TagID2",
+                "msgtype" : "textcard",
+                "agentid" : config.referred.agentid,
+                "textcard" : {
+                         "title" : "领奖通知",
+                         "description" : "<div class=\"gray\">2016年9月26日</div> <div class=\"normal\">恭喜你抽中iPhone 7一台，领奖码：xxxx</div><div class=\"highlight\">请于2016年10月10日前联系行政同事领取</div>",
+                         "url" : "http://www.all2key.cn/dispatch.html",
+                         "btntxt":"更多"
+                },
+                "enable_id_trans": 0
+             };
+             
+            req.data.db.collection('referreds')
+                .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
+                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${global.token.access_token}`, textCard))
+                .then(r => console.log("axios.post(): ", r.data))
+                .catch(err => console.log(err));
+        };
     },
     dispatch() {
         return (req, res, next) => {
 
-        }
+        };
     },
     accept() {
         return (req, res, next) => {
 
-        }
+        };
     },
     commit() {
         return (req, res, next) => {
 
-        }
+        };
     },
     end() {
         return (req, res, next) => {
 
-        }
+        };
     }
 };
 

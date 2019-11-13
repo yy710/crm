@@ -130,7 +130,7 @@
                             operator: this.operator
                         }
                     })
-                    .then(r => vant.Toast.success("保存成功！"))
+                    .then(r => vant.Toast.success(r.msg))
                     .catch(err => vant.Toast.fail("保存失败！"));
             }
         }
