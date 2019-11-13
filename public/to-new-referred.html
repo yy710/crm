@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>谊众CRM系统</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    const corpID = "ww29233ad949e808bf";
+    const redirectUri = encodeURIComponent('http://www.all2key.cn/new-referred.html');
+    const state = 'new-referred';
+    const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
+    window.location.href = url;
+
+</script>
+
+</html>

@@ -1,6 +1,7 @@
 // 载入 npm 模块
 const assert = require('assert');
 const express = require('express');
+//const bodyParser = require('body-parser')
 const http = require('http');
 //const https = require('https');
 //const fs = require('fs');
@@ -13,13 +14,14 @@ const config = require('./config.json');
 
 // 载入自定义模块
 const AccessToken = require('./access_token.js');
-const Referred = require('./referred.js');
+const Referred = require('./referred.js').default;
 
 // 创建 http 服务
 const app = express();
 const httpServer = http.createServer(app);
 // 允许跨域访问
 app.use(cors());
+//app.use(bodyParser.json());
 app.use(function (req, res, next) {
     req.data = {};
     req.data.config = config;

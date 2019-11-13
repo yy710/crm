@@ -26,6 +26,7 @@ module.exports = function (express) {
     router.use('/referred', routerReferred)
 
     routerReferred.use('/new', (req, res, next) => {
+        req.query.operator = JSON.parse(req.query.operator); 
         console.log("req.query: \n", req.query);
         res.json({ msg: "ok!" });
     });
@@ -50,10 +51,17 @@ module.exports = function (express) {
         getUser(),
         (req, res, next) => {
             const s = sign(global.jsapi_ticket.ticket, req.data.url);
-            console.log("sign(): ", s);
+            //console.log("sign(): ", s);
             delete s.jsapi_ticket;
             delete s.url;
-            res.json(s);
+
+            let user = {};
+            if (req.data.user) {
+                user.id = req.data.user.userid;
+                user.name = req.data.user.name;
+                user.mobile = req.data.user.mobile;
+            }
+            res.json({ user: user, sign: s });
         }
     );
 

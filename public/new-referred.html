@@ -17,37 +17,38 @@
     </style>
     <!-- 引入样式文件 -->
     <link rel="stylesheet" href="./styles/vant.css">
-    <title>谊众CRM系统-客户转介绍管理-录入新的转介绍信息</title>
+    <title>谊众CRM系统</title>
 </head>
 
 <body>
     <div id="app">
-        <van-nav-bar title="录入新的转介绍信息" left-text="取消" right-text="获得我的信息" left-arrow @click-left="onClickLeft"
-            @click-right="onClickRight"></van-nav-bar>
-        <van-cell-group title="请输入客户信息(必填)：">
-            <van-field v-model="customerName" required label="客户姓名" left-icon="contact" placeholder="请输入客户姓名">
+        <van-nav-bar title="录入新的转介绍信息"></van-nav-bar>
+        <van-cell-group title="客户信息(必填)：">
+            <van-field v-model="customerName" required label="客户姓名：" left-icon="contact" placeholder="请输入客户姓名">
             </van-field>
-            <van-field v-model="customerPhone" required label="客户手机号" placeholder="请输入客户手机号" left-icon="phone-o">
+            <van-field v-model="customerPhone" required label="客户手机：" placeholder="请输入客户手机号" left-icon="phone-o">
+            </van-field>
+            <van-field v-model="carType" label="意向车型：" placeholder="可输入客户意向购买车型" left-icon="star-o">
             </van-field>
         </van-cell-group>
         <van-radio-group v-model="source">
-            <van-cell-group title="请选择信息来源：">
-                <van-cell title="来源 1" clickable @click="radio = '1'">
+            <van-cell-group title="选择信息来源：">
+                <van-cell title="转介绍" clickable @click="radio = '1'">
                     <van-radio slot="right-icon" name="1"></van-radio>
                 </van-cell>
-                <van-cell title="来源 2" clickable @click="radio = '2'">
+                <van-cell title="保客营销" clickable @click="radio = '2'">
                     <van-radio slot="right-icon" name="2"></van-radio>
                 </van-cell>
             </van-cell-group>
         </van-radio-group>
-        <van-cell-group title="请输入介绍人信息：">
-            <van-field v-model="fromName" label="介绍人姓名" placeholder="请输入介绍人姓名"></van-field>
-            <van-field v-model="fromPhone" label="介绍人手机号" placeholder="请输入介绍人手机号"></van-field>
+        <van-cell-group title="介绍人信息：">
+            <van-field v-model="fromName" label="介绍人姓名：" placeholder="可输入介绍人姓名"></van-field>
+            <van-field v-model="fromPhone" label="介绍人手机：" placeholder="可输入介绍人手机号"></van-field>
         </van-cell-group>
+        <van-cell><span>录入人员：{{ operator.name }}——{{ operator.mobile }}</span></van-cell>
         <van-cell>
             <van-button type="primary" style="width: 100%" @click="sendNewReferred">确认保存</van-button>
         </van-cell>
-        <van-cell><span>录入:{{ employer }}</span></van-cell>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
@@ -76,17 +77,19 @@
         data: {
             customerName: null,
             customerPhone: null,
-            source: 2,
+            carType: null,
+            source: 1,
             fromName: null,
             fromPhone: null,
-            employer: ''
+            operator: { name: '', mobile: '', id: '' }
         },
         mounted: function () {
             //this.code = this.$route.query.code;
             //this.code = window.location.href;
             axios.get(`/yz/referred/get-jsapi-ticket?url=${encodeURIComponent(window.location.href)}`)
                 .then(res => {
-                    ticket = res.data;
+                    ticket = res.data.sign;
+                    this.operator = res.data.user;
                     //console.log(ticket);
                     wx.config({
                         beta: true, // 必须这么写，否则wx.invoke调用形式的jsapi会有问题
@@ -120,9 +123,11 @@
                         params: {
                             customerName: this.customerName,
                             customerPhone: this.customerPhone,
+                            carType: this.carType,
                             source: this.source,
                             fromName: this.fromName,
-                            fromPhone: this.fromPhone
+                            fromPhone: this.fromPhone,
+                            operator: this.operator
                         }
                     })
                     .then(r => vant.Toast.success("保存成功！"))

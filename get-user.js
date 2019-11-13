@@ -16,7 +16,7 @@ function getUserInfoFromCode() {
                 .then(result => {
                     console.log("axios.get(2): ", result.data);
                     assert.equal(0, result.data.errcode);
-                    req.data.employer = result.data;
+                    req.data.user = result.data;
                     next();
                 })
                 .catch(err => console.log(err));
