@@ -60,21 +60,6 @@ class Referred {
     get() {
 
     }
-
-    getNewAccessToken() {
-        return axios
-            .get(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpid}&corpsecret=${config.referredSecret}`)
-            .then()
-            .catch();
-    }
-
-    checkoutAccessToken(){
-
-    }
-
-    getAccessToken(){
-
-    }
 }
 
 module.exports = Referred;

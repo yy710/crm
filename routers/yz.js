@@ -1,5 +1,6 @@
 const accessToken = require('../access_token');
 const jsapiTicket = require('../jsapi_ticket');
+const getUser = require('../get-user');
 const sign = require('../sign');
 
 module.exports = function (express) {
@@ -41,11 +42,27 @@ module.exports = function (express) {
         routerAccessToken,
         routerJsapiTicket,
         (req, res, next) => {
-            const s = sign(global.jsapi_ticket.ticket, 'http://www.all2key.cn/new-referred.html');
+            req.data.url = decodeURIComponent(req.query.url);
+            req.query.code = req.query.code || getParamValue(req.data.url, "code");
+            console.log("req.query.code: ", req.query.code);
+            next();
+        },
+        getUser(),
+        (req, res, next) => {
+            const s = sign(global.jsapi_ticket.ticket, req.data.url);
             console.log("sign(): ", s);
+            delete s.jsapi_ticket;
+            delete s.url;
             res.json(s);
         }
     );
 
     return router;
+}
+
+function getParamValue(url, key) {
+    const regex = new RegExp(key + "=([^&]*)", "i");
+    const ret = url.match(regex);
+    if (ret != null) return (ret[1]);
+    return null;
 }

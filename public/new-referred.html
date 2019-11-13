@@ -47,7 +47,7 @@
         <van-cell>
             <van-button type="primary" style="width: 100%" @click="sendNewReferred">确认保存</van-button>
         </van-cell>
-        <van-cell><span>code:{{ code }}</span></van-cell>
+        <van-cell><span>录入:{{ employer }}</span></van-cell>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
@@ -59,14 +59,16 @@
 <script type="text/javascript" src="./jweixin-1.2.0.js"></script>
 <script>
     const corpID = "ww29233ad949e808bf";
-    function urlencode(str) {
+
+    function urlencode2(str) {
         str = (str + '').toString();
         return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
             replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
     }
 
-    const routes = [];
-    const router = new VueRouter({ mode: 'history', routes });
+    //const routes = [];
+    //const router = new VueRouter({ mode: 'history', routes });
+    const router = new VueRouter({ mode: 'history' });
 
     const app = new Vue({
         el: "#app",
@@ -77,15 +79,15 @@
             source: 2,
             fromName: null,
             fromPhone: null,
-            code: 0
+            employer: ''
         },
-        updated: function () {
-            this.code = this.$route.params.code;
-
-            axios.get('/yz/referred/get-jsapi-ticket')
+        mounted: function () {
+            //this.code = this.$route.query.code;
+            //this.code = window.location.href;
+            axios.get(`/yz/referred/get-jsapi-ticket?url=${encodeURIComponent(window.location.href)}`)
                 .then(res => {
                     ticket = res.data;
-                    console.log(ticket);
+                    //console.log(ticket);
                     wx.config({
                         beta: true, // 必须这么写，否则wx.invoke调用形式的jsapi会有问题
                         debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
@@ -103,11 +105,11 @@
         },
         methods: {
             onClickLeft() {
-                Toast("返回");
+                vant.Toast("返回");
             },
             onClickRight() {
-                const redirectUri = urlencode('http://www.all2key.cn/new-referred.html');
-                const state = '';
+                const redirectUri = encodeURIComponent('http://www.all2key.cn/new-referred.html');
+                const state = 'new';
                 const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
                 window.location.href = url;
             },
@@ -123,8 +125,8 @@
                             fromPhone: this.fromPhone
                         }
                     })
-                    .then(r => Toast.success("保存成功！"))
-                    .catch(err => Toast.fail("保存失败！"));
+                    .then(r => vant.Toast.success("保存成功！"))
+                    .catch(err => vant.Toast.fail("保存失败！"));
             }
         }
     })
