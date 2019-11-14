@@ -52,12 +52,12 @@
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
-<script type="text/javascript" src="./vue.min.js"></script>
-<script type="text/javascript" src="./vue-router.js"></script>
-<script type="text/javascript" src="./httpVueLoader.js"></script>
-<script type="text/javascript" src="./vant.min.js"></script>
-<script type="text/javascript" src="./axios.min.js"></script>
-<script type="text/javascript" src="./jweixin-1.2.0.js"></script>
+<script type="text/javascript" src="./libs/vue.min.js"></script>
+<script type="text/javascript" src="./libs/vue-router.js"></script>
+<script type="text/javascript" src="./libs/httpVueLoader.js"></script>
+<script type="text/javascript" src="./libs/vant.min.js"></script>
+<script type="text/javascript" src="./libs/axios.min.js"></script>
+<script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
 <script>
     const corpID = "ww29233ad949e808bf";
 
@@ -88,7 +88,7 @@
             //this.code = window.location.href;
             axios.get(`/yz/referred/get-jsapi-ticket?url=${encodeURIComponent(window.location.href)}`)
                 .then(res => {
-                    ticket = res.data.sign;
+                    const ticket = res.data.sign;
                     this.operator = res.data.user;
                     //console.log(ticket);
                     wx.config({
@@ -111,10 +111,7 @@
                 vant.Toast("返回");
             },
             onClickRight() {
-                const redirectUri = encodeURIComponent('http://www.all2key.cn/new-referred.html');
-                const state = 'new';
-                const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
-                window.location.href = url;
+               
             },
             sendNewReferred() {
                 //window.console.log(this.$data);

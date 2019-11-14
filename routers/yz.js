@@ -26,6 +26,11 @@ module.exports = function (express) {
 
     router.use('/referred', routerReferred)
 
+    routerReferred.use('/dispatch', (req, res, next)=>{
+        console.log("req.query: \n", req.query);
+        res.json({ err: 0, msg: "分配成功！" });
+    });
+
     routerReferred.use('/new',
         (req, res, next) => {
             req.query.operator = JSON.parse(req.query.operator);
