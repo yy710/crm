@@ -56,7 +56,7 @@ module.exports = {
         return (req, res, next) => {
             req.data.referred = {
                 // 识别ID
-                id: 0,
+                id: new Date().getTime(),
                 // 订单基础信息，通常不需要更改
                 order: {
                     potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
@@ -76,24 +76,25 @@ module.exports = {
                 }]
             };
             const textCard = {
-                "touser" : "YuChunJian",
+                "touser": "YuChunJian",
                 //"toparty" : "PartyID1 | PartyID2",
                 //"totag" : "TagID1 | TagID2",
-                "msgtype" : "textcard",
-                "agentid" : config.referred.agentid,
-                "textcard" : {
-                         "title" : "领奖通知",
-                         "description" : "<div class=\"gray\">2016年9月26日</div> <div class=\"normal\">恭喜你抽中iPhone 7一台，领奖码：xxxx</div><div class=\"highlight\">请于2016年10月10日前联系行政同事领取</div>",
-                         "url" : "http://www.all2key.cn/dispatch.html",
-                         "btntxt":"更多"
+                "msgtype": "textcard",
+                "agentid": config.referred.agentid,
+                "textcard": {
+                    "title": "收到新转介绍信息通知",
+                    "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"normal\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"highlight\">信息创建人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
+                    "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
+                    "btntxt": "指派顾问"
                 },
                 "enable_id_trans": 0
-             };
-             
+            };
+
             req.data.db.collection('referreds')
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
                 .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${global.token.access_token}`, textCard))
                 .then(r => console.log("axios.post(): ", r.data))
+                .then(r => next())
                 .catch(err => console.log(err));
         };
     },

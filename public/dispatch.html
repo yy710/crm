@@ -22,16 +22,20 @@
 
 <body>
     <div id="app">
-        <van-cell><span>录入人员：{{ operator.name }}——{{ operator.mobile }}</span></van-cell>
-        <van-cell>
-            <van-button type="primary" style="width: 100%" @click="sendDispatch">确认分配</van-button>
-        </van-cell>
+        <van-skeleton title avatar :row="3">
+            <div>实际内容</div>
+        </van-skeleton>
+        <van-panel icon="friends-o" title="转介绍信息" desc="确认后系统将自动通知顾问！" status="状态">
+            <van-cell>将分配给{{employer.name}}后续跟进</van-cell>
+            <div slot="footer">
+                <van-button size="small" type="primary" @click="dispatchEmployer">重新分配</van-button>
+                <van-button size="small" type="danger" @click="sendDispatch">分配确认</van-button>
+            </div>
+        </van-panel>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
 <script type="text/javascript" src="./libs/vue.min.js"></script>
-<script type="text/javascript" src="./libs/vue-router.js"></script>
-<script type="text/javascript" src="./libs/httpVueLoader.js"></script>
 <script type="text/javascript" src="./libs/vant.min.js"></script>
 <script type="text/javascript" src="./libs/axios.min.js"></script>
 <script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
@@ -39,35 +43,62 @@
 <script>
     //const routes = [];
     //const router = new VueRouter({ mode: 'history', routes });
-    const router = new VueRouter({ mode: 'history' });
+    //const router = new VueRouter({ mode: 'history' });
 
     const app = new Vue({
         el: "#app",
-        router,
-        data: {
-            employer: { name: '', mobile: '', id: '' },
-            operator: { name: '', mobile: '', id: '' }
+        //router,
+        data: () => {
+            return {
+                employer: { name: '', mobile: '', id: '' },
+                operator: { name: '', mobile: '', id: '' }
+            }
         },
         mounted: function () {
             getTicket().then(r => this.operator = r);
-        },
-        props: {
-            employer: Object
+            wx.ready(this.dispatchEmployer);
+            wx.error(function (res) {
+            });
         },
         methods: {
             sendDispatch() {
                 //window.console.log(this.$data);
-                return axios.get("/yz/referred/dispatch", {
-                    params: {
-                        employer: this.employer,
-                        operator: this.operator
-                    }
-                })
-                    .then(r => vant.Toast.success(r.msg))
+                axios
+                    .get("/yz/referred/dispatch", {
+                        params: {
+                            employer: this.employer,
+                            operator: this.operator,
+                            referredid: getParamValue(window.location.href, 'referredid')
+                        }
+                    })
+                    .then(r => vant.Toast.success(r.data.msg))
+                    .then(r => setTimeout(window.close, 2000))
                     .catch(err => vant.Toast.fail("操作失败！"));
+            },
+            dispatchEmployer: () => {
+                wx.invoke(
+                    "selectEnterpriseContact",
+                    {
+                        "fromDepartmentId": -1,// 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
+                        "mode": "single",// 必填，选择模式，single表示单选，multi表示多选
+                        "type": ["user"]// 必填，选择限制类型，指定department、user中的一个或者多个
+                    },
+                    res => {
+                        if (res.err_msg == "selectEnterpriseContact:ok") {
+                            if (typeof res.result == 'string') {
+                                //由于目前各个终端尚未完全兼容，需要开发者额外判断result类型以保证在各个终端的兼容性
+                                res.result = JSON.parse(res.result)
+                            }
+                            var selectedUserList = res.result.userList; // 已选的成员列表
+                            var user = selectedUserList[0];
+                            app.$data.employer = user;
+                            //window.alert(user.id);
+                        }
+                    }
+                );
             }
         }
-    })
+    });
 </script>
 
 </html>

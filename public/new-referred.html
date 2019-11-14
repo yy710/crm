@@ -103,19 +103,16 @@
                 })
                 .catch(err => console.log(err));
         },
-        props: {
-            employer: Object
-        },
         methods: {
             onClickLeft() {
                 vant.Toast("返回");
             },
             onClickRight() {
-               
+
             },
             sendNewReferred() {
                 //window.console.log(this.$data);
-                return axios
+                axios
                     .get("/yz/referred/new", {
                         params: {
                             customerName: this.customerName,
@@ -127,7 +124,9 @@
                             operator: this.operator
                         }
                     })
-                    .then(r => vant.Toast.success(r.msg))
+                    //.then(r => window.alert(r.data.msg))
+                    .then(r => vant.Toast.success(r.data.msg))
+                    .then(r => setTimeout(window.close, 2000))
                     .catch(err => vant.Toast.fail("保存失败！"));
             }
         }

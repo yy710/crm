@@ -6,14 +6,14 @@ module.exports = {
         return function (req, res, next) {
             if (global.token) {
                 req.data.saveToken = false;
-                console.log("find token in global:", global.token);
+                //console.log("find token in global:", global.token);
                 next();
             }
             else req.data.db.collection('tokens')
                 .find({ agentid: req.data.config.referred.agentid })
                 .next()
                 .then(doc => {
-                    console.log("find token in db: ", doc);
+                    //console.log("find token in db: ", doc);
                     global.token = doc;
                     next();
                 })

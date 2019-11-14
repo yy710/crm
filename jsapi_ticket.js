@@ -6,14 +6,14 @@ module.exports = {
         return function (req, res, next) {
             if (global.jsapi_ticket) {
                 req.data.saveTicket = false;
-                console.log("find ticket in global:", global.jsapi_ticket);
+                //console.log("find ticket in global:", global.jsapi_ticket);
                 next();
             }
             else req.data.db.collection('jsapi_ticket')
                 .find({ corpid: req.data.config.corpid })
                 .next()
                 .then(doc => {
-                    console.log("find ticket in db: ", doc);
+                    //console.log("find ticket in db: ", doc);
                     global.jsapi_ticket = doc;
                     next();
                 })

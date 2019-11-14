@@ -27,6 +27,9 @@ module.exports = function (express) {
     router.use('/referred', routerReferred)
 
     routerReferred.use('/dispatch', (req, res, next)=>{
+        //console.log("req.query: \n", req.query);
+        req.query.operator = JSON.parse(req.query.operator);
+        req.query.employer = JSON.parse(req.query.employer);
         console.log("req.query: \n", req.query);
         res.json({ err: 0, msg: "分配成功！" });
     });
