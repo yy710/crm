@@ -3,6 +3,7 @@ const jsapiTicket = require('../jsapi_ticket');
 const getUser = require('../get-user');
 const sign = require('../sign');
 const referred = require('../referred');
+const { replyEchostr } = require('../wx-msg');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -24,9 +25,11 @@ module.exports = function (express) {
         jsapiTicket.saveToDb()
     );
 
-    router.use('/referred', routerReferred)
+    router.use('/referred', routerReferred);
 
-    routerReferred.use('/dispatch', (req, res, next)=>{
+    routerReferred.use('/msg', replyEchostr());
+
+    routerReferred.use('/dispatch', (req, res, next) => {
         //console.log("req.query: \n", req.query);
         req.query.operator = JSON.parse(req.query.operator);
         req.query.employer = JSON.parse(req.query.employer);

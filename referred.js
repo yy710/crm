@@ -75,24 +75,33 @@ module.exports = {
                     data: req.query
                 }]
             };
-            const textCard = {
+            const taskCard = {
                 "touser": "YuChunJian",
                 //"toparty" : "PartyID1 | PartyID2",
                 //"totag" : "TagID1 | TagID2",
-                "msgtype": "textcard",
+                "msgtype": "taskcard",
                 "agentid": config.referred.agentid,
-                "textcard": {
+                "taskcard": {
                     "title": "收到新转介绍信息通知",
                     "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"normal\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"highlight\">信息创建人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
                     "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
-                    "btntxt": "指派顾问"
+                    "task_id": randomString(),
+                    "btn": [
+                        {
+                            "key": "dispatch",
+                            "name": "请指派顾问",
+                            "replace_name": "已指派",
+                            "color": "red",
+                            "is_bold": true
+                        }
+                    ]
                 },
                 "enable_id_trans": 0
             };
 
             req.data.db.collection('referreds')
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
-                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${global.token.access_token}`, textCard))
+                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${global.token.access_token}`, taskCard))
                 .then(r => console.log("axios.post(): ", r.data))
                 .then(r => next())
                 .catch(err => console.log(err));
@@ -162,4 +171,11 @@ class Referred {
     get() {
 
     }
+}
+
+function randomString(length = 8) {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
 }

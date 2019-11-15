@@ -22,16 +22,19 @@
 
 <body>
     <div id="app">
-        <van-skeleton title avatar :row="3">
-            <div>实际内容</div>
-        </van-skeleton>
-        <van-panel icon="friends-o" title="转介绍信息" desc="确认后系统将自动通知顾问！" status="状态">
-            <van-cell>将分配给{{employer.name}}后续跟进</van-cell>
-            <div slot="footer">
-                <van-button size="small" type="primary" @click="dispatchEmployer">重新分配</van-button>
-                <van-button size="small" type="danger" @click="sendDispatch">分配确认</van-button>
-            </div>
-        </van-panel>
+        <van-cell-group title="转介绍信息">
+            <van-cell title="客户信息：" value="张飞——18669077710" icon="friends-o" label="来源类别：转介绍"></van-cell>
+            <van-cell title="介绍人信息：" value="赵云——18669077710"></van-cell>
+            <van-cell title="录入人员：" value="马超——18669077710"></van-cell>
+            <van-cell title="指派顾问：" :value="employer.name" label="确认后系统将自动通知！">
+                <!-- 使用 right-icon 插槽来自定义右侧图标 -->
+                <van-icon slot="right-icon" :name="employer.avatar" style="line-height: inherit;" size=50></van-icon>
+            </van-cell>
+        </van-cell-group>
+        <van-cell>
+            <van-button size="small" type="primary" @click="dispatchEmployer">重新分配</van-button>
+            <van-button size="small" type="danger" @click="sendDispatch">分配确认</van-button>
+        </van-cell>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
