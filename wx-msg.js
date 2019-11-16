@@ -1,7 +1,8 @@
-const querystring = require('querystring');
-const axios = require('axios');
-const fs = require('fs');
-const crypto = require('crypto');
+//const querystring = require('querystring');
+//const axios = require('axios');
+//const fs = require('fs');
+//const crypto = require('crypto');
+const xml2js = require('xml2js');
 const config = require('./config.json');
 const msgAPI = require('./api_crypto');
 //console.log(typeof (msgAPI));
@@ -42,8 +43,16 @@ function replyEchostr() {
 };
 
 function handleMsg() {
-  return (req, res, next)=>{
-    console.log("req.body: ",req.body);
+  return (req, res, next) => {
+    //console.log("req.body: ", req.body);
+    let xml = msgAPI.decrypt(req.body.xml.encrypt[0]);
+    //console.log("msgAPI.decrypt(): ", xml);
+    xml2js.parseStringPromise(xml /*, options */).then(function (result) {
+      console.dir(result.xml);
+    })
+      .catch(function (err) {
+        // Failed
+      });
     res.send({
       status: 200,
       data: "success"
@@ -55,3 +64,20 @@ module.exports = {
   replyEchostr,
   handleMsg
 };
+
+function temp() {
+  //var xml2js = require('xml2js');
+
+  const parser = new xml2js.Parser(/* options */);
+  parser.parseStringPromise(xml).then(function (result) {
+    console.dir(result);
+    console.log('Done');
+  })
+    .catch(function (err) {
+      // Failed
+    });
+
+  const obj = { name: "Super", Surname: "Man", age: 23 };
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(obj);
+}

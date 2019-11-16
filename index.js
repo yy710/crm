@@ -1,13 +1,14 @@
 // 载入 npm 模块
 const assert = require('assert');
 const express = require('express');
-//const bodyParser = require('body-parser')
+const bodyParser = require('body-parser')
 const http = require('http');
+const xmlparser = require('express-xml-bodyparser');
 //const https = require('https');
 //const fs = require('fs');
 const cors = require('cors');
 const MongoClient = require('mongodb').MongoClient;
-const axios = require('axios');
+//const axios = require('axios');
 
 // 载入配置文件
 const config = require('./config.json');
@@ -21,7 +22,12 @@ const app = express();
 const httpServer = http.createServer(app);
 // 允许跨域访问
 app.use(cors());
-//app.use(bodyParser.json());
+// post data to req.body
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+// work weixin post xml data to req.body
+app.use(xmlparser());
+
 app.use(function (req, res, next) {
     req.data = {};
     req.data.config = config;
