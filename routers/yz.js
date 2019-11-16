@@ -3,7 +3,7 @@ const jsapiTicket = require('../jsapi_ticket');
 const getUser = require('../get-user');
 const sign = require('../sign');
 const referred = require('../referred');
-const { replyEchostr } = require('../wx-msg');
+const { replyEchostr, handleMsg } = require('../wx-msg');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -27,7 +27,8 @@ module.exports = function (express) {
 
     router.use('/referred', routerReferred);
 
-    routerReferred.use('/msg', replyEchostr());
+    routerReferred.get('/msg', replyEchostr());
+    routerReferred.post('/msg', express.urlencoded({ extended: true }),handleMsg());
 
     routerReferred.use('/dispatch', (req, res, next) => {
         //console.log("req.query: \n", req.query);

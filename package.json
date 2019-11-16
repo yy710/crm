@@ -13,7 +13,6 @@
     "multer": "^1.4.1",
     "vue": "^2.6.10",
     "vue-server-renderer": "^2.6.10",
-    "wx-ding-aes": "0.0.10",
     "xlsx": "^0.14.1",
     "xml2js": "^0.4.22"
   },
