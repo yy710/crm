@@ -28,7 +28,7 @@ module.exports = function (express) {
     router.use('/referred', routerReferred);
 
     routerReferred.get('/msg', replyEchostr());
-    routerReferred.post('/msg', express.urlencoded({ extended: true }),handleMsg());
+    routerReferred.post('/msg', express.json(),handleMsg());
 
     routerReferred.use('/dispatch', (req, res, next) => {
         //console.log("req.query: \n", req.query);
