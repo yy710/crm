@@ -25,18 +25,24 @@ module.exports = function (express) {
         jsapiTicket.saveToDb()
     );
 
+    router.use(routerAccessToken);
     router.use('/referred', routerReferred);
 
     routerReferred.get('/msg', replyEchostr());
-    routerReferred.post('/msg', express.json(),handleMsg());
+    routerReferred.post('/msg', express.json(), handleMsg());
 
-    routerReferred.use('/dispatch', (req, res, next) => {
-        //console.log("req.query: \n", req.query);
-        req.query.operator = JSON.parse(req.query.operator);
-        req.query.employer = JSON.parse(req.query.employer);
-        console.log("req.query: \n", req.query);
-        res.json({ err: 0, msg: "分配成功！" });
-    });
+    routerReferred.use('/dispatch',
+        (req, res, next) => {
+            //console.log("req.query: \n", req.query);
+            req.query.operator = JSON.parse(req.query.operator);
+            req.query.employer = JSON.parse(req.query.employer);
+            console.log("req.query: \n", req.query);
+            next();
+        },
+        referred.dispatch(),
+        (req, res, next) => {
+            res.json({ err: 0, msg: "分配成功！" });
+        });
 
     routerReferred.use('/new',
         (req, res, next) => {

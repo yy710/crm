@@ -12,6 +12,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 // 载入配置文件
 const config = require('./config.json');
+global.config = config;
 
 // 载入自定义模块
 const AccessToken = require('./access_token.js');

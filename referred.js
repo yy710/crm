@@ -1,6 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
+const sentMsg = require('./sent-msg');
 
 // 数据结构
 const data = {
@@ -54,62 +55,60 @@ const data = {
 module.exports = {
     new() {
         return (req, res, next) => {
-            req.data.referred = {
-                // 识别ID
-                id: new Date().getTime(),
-                // 订单基础信息，通常不需要更改
-                order: {
-                    potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
-                    dispatch_employer: { id: 0, name: '', phone: '' },
-                    from_customer: { id: 0, name: req.query.fromName, phone: req.query.fromPhone },
-                    carType: req.query.carType,
-                    source_type: req.query.source
-                },
-                // 订单当前状态
-                state: "new",
-                // 订单跟踪记录
-                tracks: [{
-                    action: "new",
-                    update_time: new Date(),
-                    operator: req.query.operator,
-                    data: req.query
-                }]
-            };
-            const taskCard = {
-                "touser": "YuChunJian",
-                //"toparty" : "PartyID1 | PartyID2",
-                //"totag" : "TagID1 | TagID2",
-                "msgtype": "taskcard",
-                "agentid": config.referred.agentid,
-                "taskcard": {
-                    "title": "收到新转介绍信息通知",
-                    "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"normal\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"highlight\">信息创建人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
-                    "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
-                    "task_id": randomString(),
-                    "btn": [
-                        {
-                            "key": "dispatch",
-                            "name": "请指派顾问",
-                            "replace_name": "已指派",
-                            "color": "red",
-                            "is_bold": true
-                        }
-                    ]
-                },
-                "enable_id_trans": 0
+            req.data.sentMsg =
+                req.data.referred = {
+                    // 识别ID， 随机字符串
+                    id: randomString(16),
+                    // 订单基础信息，通常不需要更改
+                    order: {
+                        potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
+                        dispatch_employer: { id: 0, name: '', phone: '' },
+                        from_customer: { id: 0, name: req.query.fromName, phone: req.query.fromPhone },
+                        carType: req.query.carType,
+                        source_type: req.query.source
+                    },
+                    // 订单当前状态
+                    state: "new",
+                    // 订单跟踪记录
+                    tracks: [{
+                        action: "new",
+                        update_time: new Date(),
+                        operator: req.query.operator,
+                        data: req.query
+                    }]
+                };
+            const textcard = {
+                "title": "有新转介绍信息",
+                "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"highlight\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"normal\">信息创建人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
+                "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
+                "btntxt": "指派顾问"
             };
 
             req.data.db.collection('referreds')
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
-                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${global.token.access_token}`, taskCard))
-                .then(r => console.log("axios.post(): ", r.data))
+                .then(r => sentMsg.init().sentTextcard(textcard))
                 .then(r => next())
                 .catch(err => console.log(err));
         };
     },
     dispatch() {
         return (req, res, next) => {
-
+            const taskcard = {
+                "title": "收到指派的转介绍任务",
+                "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"normal\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"highlight\">指派人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
+                "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}`,
+                "task_id": randomString(),
+                "btn": [
+                    {
+                        "key": "accept",
+                        "name": "点击接受任务",
+                        "replace_name": "已接受任务",
+                        "color": "red",
+                        "is_bold": true
+                    }
+                ]
+            };
+            sentMsg.init().sentTaskcard(taskcard).then(r => next()).catch(err => console.log(err));
         };
     },
     accept() {
