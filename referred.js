@@ -46,11 +46,9 @@ module.exports = {
     dispatch() {
         return (req, res, next) => {
             console.log("req.query", req.query);
-            // get referred from referredid
             const col = req.data.db.collection('referreds');
-            // write action "dispatch" to object of referred
+            // get referred from referredid
             col.findOne({ id: req.query.referredid })
-                .next()
                 .then(r => {
                     const taskid = randomString();
                     const taskcard = {
@@ -68,11 +66,13 @@ module.exports = {
                             }
                         ]
                     };
+                    // write action "dispatch" to object of referred
+                    col.updateOne(
+                        { id: req.query.referredid },
+                        { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: {}, data: { employer: {} } } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched" } },
+                        { upsert: false });
                     // send taskcard to empoyer 
                     return sentMsg.init().sentTaskcard(taskcard);
-                })
-                .then(r => {
-                    return col.updateOne();
                 })
                 .then(r => next())
                 .catch(err => console.log(err));

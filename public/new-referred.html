@@ -64,12 +64,14 @@
     function urlencode2(str) {
         str = (str + '').toString();
         return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
-            replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
+        replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
     }
 
     //const routes = [];
     //const router = new VueRouter({ mode: 'history', routes });
-    const router = new VueRouter({ mode: 'history' });
+    const router = new VueRouter({
+        mode: 'history'
+    });
 
     const app = new Vue({
         el: "#app",
@@ -81,7 +83,11 @@
             source: 1,
             fromName: null,
             fromPhone: null,
-            operator: { name: '', mobile: '', id: '' }
+            operator: {
+                name: '',
+                mobile: '',
+                id: ''
+            }
         },
         mounted: function () {
             //this.code = this.$route.query.code;
