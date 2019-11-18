@@ -65,3 +65,4 @@ typings/
 
 .vscode/
 config.json
+temp/

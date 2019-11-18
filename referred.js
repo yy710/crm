@@ -3,6 +3,15 @@ const assert = require('assert');
 const config = require('./config.json');
 const sentMsg = require('./sent-msg');
 
+const act = new Map([
+    ["new", " 新建信息"],
+    ["dispatch", "指派顾问"],
+    ["accept", "接受指派"],
+    ["commit", "跟进报告"],
+    ["success", "订单成交"],
+    ["fail", "订单战败"]
+]);
+
 module.exports = {
     new() {
         return (req, res, next) => {
@@ -72,7 +81,7 @@ module.exports = {
                         ]
                     };
                     // send taskcard to empoyer 
-                    return sentMsg.init().sentTaskcard(taskcard);
+                    return sentMsg.init({touser: req.query.employer.id}).sentTaskcard(taskcard);
                 })
                 .then(r => next())
                 .catch(err => console.log(err));
@@ -121,18 +130,22 @@ module.exports = {
                 { id: req.query.referredid },
                 { $addToSet: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
                 { upsert: false })
+                // get referred
+                .then(r => col.findOne({ id: req.query.referredid }))
                 // send msg to admin
                 .then(r => {
-                    const content = `转介绍订单状态变化通知 
+                    const content = `转介绍订单状态变化通知
                     >**订单详情** 
-                    >客  户：<font color=\"info\">开会</font> 
-                    >介绍人：@miglioguan 
-                    >指派顾问：@miglioguan、@kunliu、@jamdeezhou、@kanexiong、@kisonwang 
-                    >创建人：<font color=\"info\">广州TIT 1楼 301</font> 
-                    >创建时间：<font color=\"warning\">2018年5月18日</font> 
-                    现在状态为：
-                    状态更新说明：
-                    如需查询订单历史信息，请点击：[订单历史](https://work.weixin.qq.com)`;
+                    ><font color="info">客  户：${r.order.potential_customer.name}---${r.order.potential_customer.phone}</font>
+                    >来源类型：${r.order.source_type} 
+                    >介绍人：${r.order.from_customer.name}---${r.order.from_customer.phone} 
+                    >指派顾问：${r.order.dispatch_employer.name}
+                    >创建人：${r.tracks[0].operator.name}
+                    >创建时间：${r.tracks[0].update_time.toLocaleDateString()}
+                    ><font color="warning">现在状态：${act.get(r.state)}</font>
+                    ><font color="comment">状态更新说明：${req.query.message}</font>
+                    >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
+
                     return sentMsg.init().sendMarkdown(content);
                 })
                 .then(r => next())
@@ -161,7 +174,7 @@ function createDesc(ref) {
     desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
     desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
     desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
-    desc += `<div class=\"normal\">信息来源：${od.source || ''}</div>`;
+    desc += `<div class=\"normal\">信息来源：${od.source_type || ''}</div>`;
     desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.phone || ''}</div>`;
     desc += `<div class=\"gray\">已指派顾问：${od.dispatch_employer.name || ''}---${od.dispatch_employer.phone || ''}</div>`;
     return desc;

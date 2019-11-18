@@ -53,23 +53,33 @@
         //router,
         data: () => {
             return {
-                employer: { name: '', mobile: '', id: '' },
-                operator: { name: '', mobile: '', id: '' },
+                employer: {
+                    name: '',
+                    mobile: '',
+                    id: ''
+                },
+                operator: {
+                    name: '',
+                    mobile: '',
+                    id: ''
+                },
                 customer: '',
                 from: ''
             }
         },
         mounted: function () {
-            getTicket().then(r => this.operator = r);
-            getReferred(referredid).then(r => {
-                console.log(r);
-                this.customer = r.order.potential_customer.name + '---' + r.order.potential_customer.phone;
-                this.from = r.order.from_customer.name + '---' + r.order.from_customer.phone;
-                this.operator = r.tracks[0].operator;
-            });
+            getTicket()
+                .then(r => this.operator = r)
+                .then(r => getReferred(referredid))
+                .then(r => {
+                    console.log(r);
+                    this.customer = r.order.potential_customer.name + '---' + r.order.potential_customer
+                        .phone;
+                    this.from = r.order.from_customer.name + '---' + r.order.from_customer.phone;
+                    this.operator = r.tracks[0].operator;
+                }).catch(err => console.log(err));
             wx.ready(this.dispatchEmployer);
-            wx.error(function (res) {
-            });
+            //wx.error(function (res) {});
         },
         methods: {
             sendDispatch() {
@@ -88,11 +98,10 @@
             },
             dispatchEmployer: () => {
                 wx.invoke(
-                    "selectEnterpriseContact",
-                    {
-                        "fromDepartmentId": -1,// 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
-                        "mode": "single",// 必填，选择模式，single表示单选，multi表示多选
-                        "type": ["user"]// 必填，选择限制类型，指定department、user中的一个或者多个
+                    "selectEnterpriseContact", {
+                        "fromDepartmentId": -1, // 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
+                        "mode": "single", // 必填，选择模式，single表示单选，multi表示多选
+                        "type": ["user"] // 必填，选择限制类型，指定department、user中的一个或者多个
                     },
                     res => {
                         if (res.err_msg == "selectEnterpriseContact:ok") {

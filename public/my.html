@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        #app {
+            font-family: "Avenir", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* text-align: center; */
+            color: #2c3e50;
+            /* margin-top: 60px; */
+        }
+    </style>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="./styles/vant.css">
+    <title>谊众CRM系统</title>
+</head>
+
+<body>
+    <div id="app">
+        <van-collapse v-model="activeNames" accordion>
+            <van-collapse-item name="1">
+                <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
+                    <span>云A00001</span>
+                    <van-tag round type="primary">忠诚客户</van-tag>
+                    <van-tag round type="success">正在维修</van-tag>
+                    <div style="width: 100px;">
+                        <van-progress :percentage="60" stroke-width="8" color="#f2826a" />
+                    </div>
+                </div>
+                <van-row gutter="20">
+                    <van-col span="6">姓名：赵云</van-col>
+                    <van-col span="10">电话：13700555356</van-col>
+                    <van-col span="8">性别：男</van-col>
+                </van-row>
+                <van-row gutter="20">
+                    <van-col span="6">车型：迈腾</van-col>
+                    <van-col span="10">行驶里程：5.5万公里</van-col>
+                    <van-col span="8">服务顾问：曹操</van-col>
+                </van-row>
+            </van-collapse-item>
+        </van-collapse>
+    </div>
+</body>
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script type="text/javascript" src="./libs/vue.min.js"></script>
+<script type="text/javascript" src="./libs/vue-router.js"></script>
+<script type="text/javascript" src="./libs/httpVueLoader.js"></script>
+<script type="text/javascript" src="./libs/vant.min.js"></script>
+<script type="text/javascript" src="./libs/axios.min.js"></script>
+<script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
+<script type="text/javascript" src="./libs/common.js"></script>
+<script>
+    //const routes = [];
+    //const router = new VueRouter({ mode: 'history', routes });
+    const router = new VueRouter({
+        mode: 'history'
+    });
+
+    const app = new Vue({
+        el: "#app",
+        router,
+        data: {
+            operator: {}
+        },
+        mounted: function () {
+            //this.code = this.$route.query.code;
+            //this.code = window.location.href;
+            getTicket()
+                .then(r => this.operator = r)
+                .catch(err => console.log(err));
+        },
+        methods: {
+
+        }
+    })
+</script>
+
+</html>
