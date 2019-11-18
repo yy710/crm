@@ -1,12 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="./styles/vant.css">
+    <title>转介绍跟进</title>
 </head>
+
 <body>
-    show task!
+    <div id="app">
+        <van-nav-bar title="订单跟踪报告"></van-nav-bar>
+        <van-radio-group v-model="state" title="订单跟踪记录">
+            <van-row>
+                <van-col span="8">
+                    <van-radio name="success">成功</van-radio>
+                </van-col>
+                <van-col span="8">
+                    <van-radio name="fail">战败</van-radio>
+                </van-col>
+                <van-col span="8">
+                    <van-radio name="commit">其他</van-radio>
+                </van-col>
+            </van-row>
+        </van-radio-group>
+        <van-field v-model="message" rows="2" label="说明" type="textarea" maxlength="100" placeholder="请在此输入小于100字的相关说明"
+            show-word-limit autosize></van-field>
+        <van-button type="primary" @click="commit" style="width: 100%;">提交报告</van-button>
+    </div>
 </body>
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script type="text/javascript" src="./libs/vue.min.js"></script>
+<script type="text/javascript" src="./libs/vant.min.js"></script>
+<script type="text/javascript" src="./libs/axios.min.js"></script>
+<script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
+<script type="text/javascript" src="./libs/common.js"></script>
+<script>
+    const referredid = getParamValue(window.location.href, 'referredid');
+    const empolyerid = getParamValue(window.location.href, 'empolyerid');
+
+    const app = new Vue({
+        el: "#app",
+        //router,
+        data: () => {
+            return {
+                message: '',
+                state: 1
+            }
+        },
+        mounted: function () {
+            //getTicket().then(r => this.operator = r);
+            getReferred(referredid).then(r => {
+                console.log(r);
+            });
+        },
+        methods: {
+            commit() {
+                //window.console.log(this.$data);
+                axios
+                    .get("/yz/referred/commit", { params: { message: this.message, state: this.state, employerid, referredid } })
+                    .then(r => vant.Toast.success(r.data.msg))
+                    .then(r => setTimeout(window.close, 2000))
+                    .catch(err => vant.Toast.fail("操作失败！"));
+            }
+        }
+    });
+</script>
+
 </html>

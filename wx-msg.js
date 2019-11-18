@@ -47,12 +47,17 @@ function handleMsg() {
     //console.log("req.body: ", req.body);
     let xml = msgAPI.decrypt(req.body.xml.encrypt[0]);
     //console.log("msgAPI.decrypt(): ", xml);
-    xml2js.parseStringPromise(xml /*, options */).then(function (result) {
-      console.dir(result.xml);
-    })
+    xml2js.parseStringPromise(xml /*, options */)
+      .then(function (result) {
+        //console.dir(result.xml);
+        req.data.post = getArray0(result.xml);
+        console.log("req.data.post: ", req.data.post);
+        next();
+      })
       .catch(function (err) {
         // Failed
       });
+
     res.send({
       status: 200,
       data: "success"
@@ -80,4 +85,12 @@ function temp() {
   const obj = { name: "Super", Surname: "Man", age: 23 };
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(obj);
+}
+
+function getArray0(defaults) {
+  let newObject = {};
+  for (var key in defaults) {
+      newObject[key] = defaults[key][0];
+  }
+  return newObject;
 }

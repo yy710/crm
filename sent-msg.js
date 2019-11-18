@@ -1,6 +1,6 @@
 const axios = require('axios');
 const assert = require('assert');
-//const config = require('./config.json');
+const config = require('./config.json');
 
 function randomString(length = 8) {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -28,7 +28,7 @@ exports.init = function (msg = {}) {
     this.access_token = global.token.access_token;
 
     const _msg = {
-        "touser": "YuChunJian",
+        "touser": config.referred.adminId,
         "agentid": global.config.referred.agentid,
         "enable_id_trans": 1
     }
@@ -71,6 +71,12 @@ exports.sentTaskcard = function (taskcard = {}) {
     };
     this.msg.msgtype = "taskcard";
     this.msg.taskcard = mergeOptions(taskcard, _taskcard);
+    return this.sendMsg();
+};
+
+exports.sendMarkdown = function (content = {}) {
+    this.msg.msgtype = "markdown";
+    this.msg.markdown = { content };
     return this.sendMsg();
 };
 

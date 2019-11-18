@@ -29,7 +29,8 @@ module.exports = function (express) {
     router.use('/referred', routerReferred);
 
     routerReferred.get('/msg', replyEchostr());
-    routerReferred.post('/msg', express.json(), handleMsg());
+
+    routerReferred.post('/msg', handleMsg(), referred.accept());
 
     routerReferred.use('/dispatch',
         (req, res, next) => {
@@ -62,6 +63,20 @@ module.exports = function (express) {
             res.json({ msg: "getToken ok!" });
         }
     );
+
+    routerReferred.use('/get-referred', (req, res, next) => {
+        const rid = req.query.id;
+        req.data.db.collection('referreds').findOne({ id: rid }).then(r => {
+            console.log("get-referred: ", r);
+            res.json(r);
+        }).catch(err => console.log(err));
+    })
+
+
+    routerReferred.use('/commit', referred.commit(), (req, res, next) => {
+        console.log("commit req.query: ", req.query);
+        res.json({ code: 0, msg: "提交成功！" });
+    });
 
     routerReferred.use('/get-jsapi-ticket',
         routerAccessToken,

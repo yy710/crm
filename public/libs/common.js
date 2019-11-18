@@ -27,6 +27,12 @@ function getTicket() {
         .catch(err => console.log(err));
 }
 
+function getReferred(id) {
+    return axios.get(`/yz/referred/get-referred?id=${id}`)
+        .then(r => r.data)
+        .catch(err => console.log(err));
+}
+
 function getParamValue(url, key) {
     const regex = new RegExp(key + "=([^&]*)", "i");
     const ret = url.match(regex);

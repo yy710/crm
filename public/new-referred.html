@@ -28,16 +28,22 @@
             </van-field>
             <van-field v-model="customerPhone" required label="客户手机：" placeholder="请输入客户手机号" left-icon="phone-o">
             </van-field>
-            <van-field v-model="carType" label="意向车型：" placeholder="可输入客户意向购买车型" left-icon="star-o">
+            <van-field readonly clickable label="意向车型" :value="carType" placeholder="请选择车型" @click="showPicker = true">
+            </van-field>
+            <van-popup v-model="showPicker" position="bottom">
+                <van-picker show-toolbar :columns="carTypes" @cancel="showPicker = false" @confirm="onConfirm" />
+            </van-popup>
+            <!-- <van-picker :columns="carTypes" @change="onChange" /> -->
+            <!-- <van-field v-model="carType" label="意向车型：" placeholder="可输入客户意向购买车型" left-icon="star-o"> -->
             </van-field>
         </van-cell-group>
         <van-radio-group v-model="source">
             <van-cell-group title="选择信息来源：">
-                <van-cell title="转介绍" clickable @click="radio = '1'">
-                    <van-radio slot="right-icon" name="1"></van-radio>
+                <van-cell title="转介绍" clickable @click="radio = '转介绍'">
+                    <van-radio slot="right-icon" name="转介绍"></van-radio>
                 </van-cell>
-                <van-cell title="保客营销" clickable @click="radio = '2'">
-                    <van-radio slot="right-icon" name="2"></van-radio>
+                <van-cell title="保客营销" clickable @click="radio = '保客营销'">
+                    <van-radio slot="right-icon" name="保客营销"></van-radio>
                 </van-cell>
             </van-cell-group>
         </van-radio-group>
@@ -64,7 +70,7 @@
     function urlencode2(str) {
         str = (str + '').toString();
         return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
-        replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
+            replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
     }
 
     //const routes = [];
@@ -79,8 +85,10 @@
         data: {
             customerName: null,
             customerPhone: null,
-            carType: null,
-            source: 1,
+            carTypes: ['宝来', '速腾', '迈腾', '高尔夫', '嘉旅', 'CC'],
+            carType: '',
+            showPicker: false,
+            source: '转介绍',
             fromName: null,
             fromPhone: null,
             operator: {
@@ -110,6 +118,14 @@
                 .catch(err => console.log(err));
         },
         methods: {
+            onConfirm(value) {
+                this.carType = value;
+                this.showPicker = false;
+            },
+            onChange(picker, value, index) {
+                //Toast(`当前值：${value}, 当前索引：${index}`);
+                this.carType = value;
+            },
             onClickLeft() {
                 vant.Toast("返回");
             },

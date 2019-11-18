@@ -8,7 +8,7 @@ module.exports = {
         return (req, res, next) => {
             // create new referred data
             req.data.referred = {
-                // 识别ID， 随机字符串
+                // 识别ID， 16个字符随机字符串
                 id: randomString(16),
                 // 订单基础信息，通常不需要更改
                 order: {
@@ -28,10 +28,9 @@ module.exports = {
                     data: req.query
                 }]
             };
-            // define textcard for dispatcher
             const textcard = {
                 "title": "有新转介绍信息",
-                "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"highlight\">被介绍客户：${req.query.customerName}---${req.query.customerPhone}</div><div class=\"normal\">信息创建人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
+                "description": createDesc(req.data.referred),
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
                 "btntxt": "指派顾问"
             };
@@ -47,15 +46,21 @@ module.exports = {
         return (req, res, next) => {
             console.log("req.query", req.query);
             const col = req.data.db.collection('referreds');
-            // get referred from referredid
-            col.findOne({ id: req.query.referredid })
+            // get admin info from adminId
+            // write action "dispatch" to object of referred
+            col.updateOne(
+                { id: req.query.referredid },
+                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched" } },
+                { upsert: false })
+                // get referred from referredid
+                .then(r => col.findOne({ id: req.query.referredid }))
                 .then(r => {
-                    const taskid = randomString();
+                    //const taskid = randomString();
                     const taskcard = {
                         "title": "收到指派的转介绍任务",
-                        "description": `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div><div class=\"normal\">被介绍客户：${r.order.potential_customer.name}---${r.order.potential_customer.phone}</div><div class=\"highlight\">指派人：${req.query.operator.name}---${req.query.operator.mobile}</div>`,
-                        "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}&taskid=${taskid}`,
-                        "task_id": taskid,
+                        "description": createDesc(r),
+                        "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}&employerid=${req.query.employer.id}`,
+                        "task_id": req.query.referredid,
                         "btn": [
                             {
                                 "key": "accept",
@@ -66,11 +71,6 @@ module.exports = {
                             }
                         ]
                     };
-                    // write action "dispatch" to object of referred
-                    col.updateOne(
-                        { id: req.query.referredid },
-                        { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: {}, data: { employer: {} } } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched" } },
-                        { upsert: false });
                     // send taskcard to empoyer 
                     return sentMsg.init().sentTaskcard(taskcard);
                 })
@@ -80,12 +80,63 @@ module.exports = {
     },
     accept() {
         return (req, res, next) => {
-
+            /** 
+             * post data strcture
+             * {
+             *   ToUserName: [ 'ww29233ad949e808bf' ],
+             *   FromUserName: [ 'YuChunJian' ],
+             *   MsgType: [ 'event' ],
+             *   Event: [ 'taskcard_click' ],
+             *   CreateTime: [ '1574046122' ],
+             *   EventKey: [ 'accept' ],
+             *   TaskId: [ 'DZLwlNv8' ],
+             *   AgentId: [ '1000003' ]
+             * }
+             */
+            //const post = getArray0(req.data.post);
+            const post = req.data.post;
+            if (post.EventKey != 'accept' || post.Event != 'taskcard_click') next();
+            else {
+                const col = req.data.db.collection('referreds');
+                console.log("handle accept!");
+                col.updateOne(
+                    { id: post.TaskId },
+                    { $addToSet: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
+                    { upsert: false })
+                    .catch(err => console.log(err))
+            }
         };
     },
     commit() {
         return (req, res, next) => {
-
+            /**
+             * req.query
+             *  { message: '好',
+             * state: '1',
+             * empolyerid: 'YuChunJian',
+             * referredid: 'tJpO4tfReysQy7JU' }
+             */
+            const col = req.data.db.collection('referreds');
+            col.updateOne(
+                { id: req.query.referredid },
+                { $addToSet: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
+                { upsert: false })
+                // send msg to admin
+                .then(r => {
+                    const content = `转介绍订单状态变化通知 
+                    >**订单详情** 
+                    >客  户：<font color=\"info\">开会</font> 
+                    >介绍人：@miglioguan 
+                    >指派顾问：@miglioguan、@kunliu、@jamdeezhou、@kanexiong、@kisonwang 
+                    >创建人：<font color=\"info\">广州TIT 1楼 301</font> 
+                    >创建时间：<font color=\"warning\">2018年5月18日</font> 
+                    现在状态为：
+                    状态更新说明：
+                    如需查询订单历史信息，请点击：[订单历史](https://work.weixin.qq.com)`;
+                    return sentMsg.init().sendMarkdown(content);
+                })
+                .then(r => next())
+                .catch(err => console.log(err))
         };
     },
     end() {
@@ -100,4 +151,33 @@ function randomString(length = 8) {
     let result = '';
     for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
     return result;
+}
+
+// define textcard for dispatcher
+function createDesc(ref) {
+    const od = ref.order;
+    const op = ref.tracks[0].operator;
+    let desc = `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div>`;
+    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
+    desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
+    desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
+    desc += `<div class=\"normal\">信息来源：${od.source || ''}</div>`;
+    desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.phone || ''}</div>`;
+    desc += `<div class=\"gray\">已指派顾问：${od.dispatch_employer.name || ''}---${od.dispatch_employer.phone || ''}</div>`;
+    return desc;
+}
+
+function mergeOptions(options, defaults) {
+    for (var key in defaults) {
+        options[key] = options[key] || defaults[key];
+    }
+    return options;
+}
+
+function getArray0(defaults) {
+    let newObject = {};
+    for (var key in defaults) {
+        newObject[key] = defaults[key][0];
+    }
+    return newObject;
 }
