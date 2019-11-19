@@ -70,8 +70,12 @@ module.exports = function (express) {
             console.log("get-referred: ", r);
             res.json(r);
         }).catch(err => console.log(err));
-    })
+    });
 
+    routerReferred.use('/get-referreds', (req, res, next) => {
+        console.log("req.query", req.query);
+        res.json({ msg: "ok" });
+    });
 
     routerReferred.use('/commit', referred.commit(), (req, res, next) => {
         console.log("commit req.query: ", req.query);

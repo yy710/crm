@@ -22,6 +22,9 @@
 
 <body>
     <div id="app">
+       <!--  <div v-for="(value, name) in operator">
+            {{ name }}: {{ value }}
+        </div> -->
         <van-collapse v-model="activeNames" accordion>
             <van-collapse-item name="1">
                 <div slot="title" style="display: flex;align-items: baseline;align-content: space-around;">
@@ -44,38 +47,38 @@
                 </van-row>
             </van-collapse-item>
         </van-collapse>
+        <a href="./test.xlsx">下载excel文件</a>
+        <van-button type="default">下载excel文件</van-button>
+        <van-button type="default" @click="closeWindow">close()</van-button>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
 <script type="text/javascript" src="./libs/vue.min.js"></script>
-<script type="text/javascript" src="./libs/vue-router.js"></script>
-<script type="text/javascript" src="./libs/httpVueLoader.js"></script>
 <script type="text/javascript" src="./libs/vant.min.js"></script>
 <script type="text/javascript" src="./libs/axios.min.js"></script>
 <script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
 <script type="text/javascript" src="./libs/common.js"></script>
 <script>
-    //const routes = [];
-    //const router = new VueRouter({ mode: 'history', routes });
-    const router = new VueRouter({
-        mode: 'history'
-    });
-
     const app = new Vue({
         el: "#app",
-        router,
         data: {
+            activeNames: ['1'],
             operator: {}
         },
-        mounted: function () {
+        beforeMount: function () {
             //this.code = this.$route.query.code;
             //this.code = window.location.href;
-            getTicket()
-                .then(r => this.operator = r)
+            getTicket().then(r => this.operator = r).catch(err => console.log(err));
+        },
+        mounted: function () {
+            axios.get(`/yz/referred/get-referreds?op=${this.operator.id}`)
+                //.then(r => window.alert(r.data.msg))
                 .catch(err => console.log(err));
         },
         methods: {
-
+            closeWindow() {
+                wx.closeWindow();
+            }
         }
     })
 </script>

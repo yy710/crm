@@ -1,0 +1,25 @@
+{
+    "mockup": {
+        "controls": {
+            "control": [
+                {
+                    "ID": "0",
+                    "measuredH": "310",
+                    "measuredW": "508",
+                    "properties": {
+                        "text": "/public\n- to-new-referred.html\n-- new-referred.html\n- to-my.html\n-- my.html\n- dispatch.html\n- show-task.html"
+                    },
+                    "typeID": "SiteMap",
+                    "x": "495",
+                    "y": "170",
+                    "zOrder": "0"
+                }
+            ]
+        },
+        "measuredH": "480",
+        "measuredW": "1003",
+        "mockupH": "310",
+        "mockupW": "508",
+        "version": "1.0"
+    }
+}
