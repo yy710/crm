@@ -15,14 +15,17 @@
         <van-nav-bar title="订单跟踪报告"></van-nav-bar>
         <van-radio-group v-model="state" title="订单跟踪记录">
             <van-row>
-                <van-col span="8">
-                    <van-radio name="success">成功</van-radio>
+                <van-col span="6">
+                    <van-radio name="success">已成交</van-radio>
                 </van-col>
-                <van-col span="8">
+                <van-col span="6">
+                    <van-radio name="ordered">已订车</van-radio>
+                </van-col>
+                <van-col span="6">
+                    <van-radio name="proceed">洽谈中</van-radio>
+                </van-col>
+                <van-col span="6">
                     <van-radio name="fail">战败</van-radio>
-                </van-col>
-                <van-col span="8">
-                    <van-radio name="commit">其他</van-radio>
                 </van-col>
             </van-row>
         </van-radio-group>
@@ -62,7 +65,7 @@
                 axios
                     .get("/yz/referred/commit", { params: { message: this.message, state: this.state, employerid, referredid } })
                     .then(r => vant.Toast.success(r.data.msg))
-                    .then(r => setTimeout(window.close, 2000))
+                    .then(r => setTimeout(wx.closeWindow, 2000))
                     .catch(err => vant.Toast.fail("操作失败！"));
             }
         }

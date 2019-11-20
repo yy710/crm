@@ -25,7 +25,7 @@ module.exports = {
                     dispatch_employer: { id: 0, name: '', phone: '' },
                     from_customer: { id: 0, name: req.query.fromName, phone: req.query.fromPhone },
                     carType: req.query.carType,
-                    source_type: req.query.source
+                    source_type: ''
                 },
                 // 订单当前状态
                 state: "new",
@@ -59,7 +59,7 @@ module.exports = {
             // write action "dispatch" to object of referred
             col.updateOne(
                 { id: req.query.referredid },
-                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched" } },
+                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched", "source_type": req.query.source } },
                 { upsert: false })
                 // get referred from referredid
                 .then(r => col.findOne({ id: req.query.referredid }))
@@ -81,7 +81,7 @@ module.exports = {
                         ]
                     };
                     // send taskcard to empoyer 
-                    return sentMsg.init({touser: req.query.employer.id}).sentTaskcard(taskcard);
+                    return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard);
                 })
                 .then(r => next())
                 .catch(err => console.log(err));

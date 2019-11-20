@@ -31,6 +31,16 @@
                 <van-icon slot="right-icon" :name="employer.avatar" style="line-height: inherit;" size=50></van-icon>
             </van-cell>
         </van-cell-group>
+        <van-radio-group v-model="source">
+                <van-cell-group title="选择信息来源：">
+                    <van-cell title="转介绍" clickable @click="radio = '转介绍'">
+                        <van-radio slot="right-icon" name="转介绍"></van-radio>
+                    </van-cell>
+                    <van-cell title="保客营销" clickable @click="radio = '保客营销'">
+                        <van-radio slot="right-icon" name="保客营销"></van-radio>
+                    </van-cell>
+                </van-cell-group>
+            </van-radio-group>
         <van-cell>
             <van-button size="small" type="primary" @click="dispatchEmployer">重新分配</van-button>
             <van-button size="small" type="danger" @click="sendDispatch">分配确认</van-button>
@@ -64,7 +74,8 @@
                     id: ''
                 },
                 customer: '',
-                from: ''
+                from: '',
+                source: '转介绍'
             }
         },
         mounted: function () {
@@ -89,7 +100,8 @@
                         params: {
                             employer: this.employer,
                             operator: this.operator,
-                            referredid: referredid
+                            referredid: referredid,
+                            source: this.source,
                         }
                     })
                     .then(r => vant.Toast.success(r.data.msg))
@@ -100,7 +112,7 @@
             dispatchEmployer: () => {
                 wx.invoke(
                     "selectEnterpriseContact", {
-                        "fromDepartmentId": -1, // 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
+                        "fromDepartmentId": 9, // 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
                         "mode": "single", // 必填，选择模式，single表示单选，multi表示多选
                         "type": ["user"] // 必填，选择限制类型，指定department、user中的一个或者多个
                     },
