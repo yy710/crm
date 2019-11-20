@@ -40,7 +40,7 @@ module.exports = {
             };
             const textcard = {
                 "title": "有新转介绍信息",
-                "description": createDesc(req.data.referred),
+                "description": createDesc1(req.data.referred),
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
                 "btntxt": "指派顾问"
             };
@@ -60,7 +60,7 @@ module.exports = {
             // write action "dispatch" to object of referred
             col.updateOne(
                 { id: req.query.referredid },
-                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched", "source_type": req.query.source } },
+                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched", "order.source_type": req.query.source } },
                 { upsert: false })
                 // get referred from referredid
                 .then(r => col.findOne({ id: req.query.referredid }))
@@ -68,7 +68,7 @@ module.exports = {
                     //const taskid = randomString();
                     const taskcard = {
                         "title": "收到指派的转介绍任务",
-                        "description": createDesc(r),
+                        "description": createDesc2(r),
                         "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}&employerid=${req.query.employer.id}`,
                         "task_id": req.query.referredid,
                         "btn": [
@@ -142,7 +142,7 @@ module.exports = {
                     >介绍人：${r.order.from_customer.name}---${r.order.from_customer.phone} 
                     >指派顾问：${r.order.dispatch_employer.name}
                     >创建人：${r.tracks[0].operator.name}
-                    >创建时间：${r.tracks[0].update_time.toLocaleDateString()}
+                    >创建时间：${r.tracks[0].update_time.toLocaleString()}
                     ><font color="warning">现在状态：${act.get(r.state)}</font>
                     ><font color="comment">状态更新说明：${req.query.message}</font>
                     >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
@@ -168,16 +168,28 @@ function randomString(length = 8) {
 }
 
 // define textcard for dispatcher
-function createDesc(ref) {
+function createDesc1(ref) {
     const od = ref.order;
     const op = ref.tracks[0].operator;
-    let desc = `<div class=\"gray\">${(new Date()).toLocaleDateString()}</div>`;
+    let desc = `<div class=\"gray\">${(new Date()).toLocaleString()}</div>`;
+    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
+    desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
+    desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
+    desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.mobile || ''}</div>`;
+    desc += `<div class=\"gray\">建议指派顾问：${ref.tracks[0].data.preEmployer || ''}</div>`;
+    return desc;
+}
+
+function createDesc2(ref) {
+    const od = ref.order;
+    const op = ref.tracks[0].operator;
+    let desc = `<div class=\"gray\">${(new Date()).toLocaleString()}</div>`;
     desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
     desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
     desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
     desc += `<div class=\"normal\">信息来源：${od.source_type || ''}</div>`;
-    desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.phone || ''}</div>`;
-    desc += `<div class=\"gray\">已指派顾问：${od.dispatch_employer.name || ''}---${od.dispatch_employer.phone || ''}</div>`;
+    desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.mobile || ''}</div>`;
+    desc += `<div class=\"gray\">已指派顾问：${od.dispatch_employer.name || ''}</div>`;
     return desc;
 }
 
