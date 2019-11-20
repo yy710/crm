@@ -93,7 +93,8 @@
                         }
                     })
                     .then(r => vant.Toast.success(r.data.msg))
-                    .then(r => setTimeout(window.close, 2000))
+                    // instead of wx.closeWindow()
+                    .then(r => setTimeout(wx.closeWindow, 2000))
                     .catch(err => vant.Toast.fail("操作失败！"));
             },
             dispatchEmployer: () => {

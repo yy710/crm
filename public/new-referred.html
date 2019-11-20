@@ -148,7 +148,7 @@
                     })
                     //.then(r => window.alert(r.data.msg))
                     .then(r => vant.Toast.success(r.data.msg))
-                    .then(r => setTimeout(window.close, 2000))
+                    .then(r => setTimeout(wx.closeWindow, 2000))
                     .catch(err => vant.Toast.fail("保存失败！"));
             }
         }

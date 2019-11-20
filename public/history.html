@@ -19,7 +19,7 @@
                 <p>{{track.time}}</p>
             </van-step>
         </van-steps>
-        <van-button type="primary" @click="close" style="width: 100%;">关闭</van-button>
+        <van-button type="primary" @click="closeWindow" style="width: 100%;">关闭</van-button>
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
@@ -59,8 +59,8 @@
             });
         },
         methods: {
-            close() {
-                window.close();
+            closeWindow() {
+                wx.closeWindow();
             }
         }
     });
