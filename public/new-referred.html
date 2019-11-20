@@ -39,6 +39,7 @@
             <van-field v-model="fromName" label="介绍人姓名：" placeholder="可输入介绍人姓名"></van-field>
             <van-field v-model="fromPhone" label="介绍人手机：" placeholder="可输入介绍人手机号"></van-field>
         </van-cell-group>
+        <van-field v-model="preEmployer" label="建议顾问：" placeholder="可输入建议指派的顾问"></van-field>
         <van-cell><span>录入人员：{{ operator.name }}——{{ operator.mobile }}</span></van-cell>
         <van-cell>
             <van-button type="primary" style="width: 100%" @click="sendNewReferred">确认保存</van-button>
@@ -67,6 +68,7 @@
             showPicker: false,
             fromName: null,
             fromPhone: null,
+            preEmployer: null,
             operator: {
                 name: '',
                 mobile: '',
@@ -97,6 +99,7 @@
                             carType: this.carType,
                             fromName: this.fromName,
                             fromPhone: this.fromPhone,
+                            preEmployer: this.preEmployer,
                             operator: this.operator
                         }
                     })

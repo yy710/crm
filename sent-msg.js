@@ -28,7 +28,7 @@ exports.init = function (msg = {}) {
     this.access_token = global.token.access_token;
 
     const _msg = {
-        "touser": "SunYing|YuChunJian",
+        "touser": config.referred.adminId,
         "agentid": global.config.referred.agentid,
         "enable_id_trans": 1
     }
