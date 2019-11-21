@@ -2,6 +2,16 @@
 
 const corpID = "ww29233ad949e808bf";
 
+const act = new Map([
+    ["new", " 新建信息"],
+    ["dispatched", "指派顾问"],
+    ["accepted", "接受指派"],
+    ["proceed", "洽谈中"],
+    ["success", "已成交"],
+    ["ordered", "已订车"],
+    ["fail", "战败"]
+]);
+
 function urlencode2(str) {
     str = (str + '').toString();
     return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
@@ -38,4 +48,23 @@ function getParamValue(url, key) {
     const ret = url.match(regex);
     if (ret != null) return (ret[1]);
     return null;
+}
+
+function state2num(state) {
+    switch (state) {
+        case "new":
+            return 10;
+        case "dispathed":
+            return 30;
+        case "accepted":
+            return 45;
+        case "proceed":
+            return 60;
+        case "ordered":
+            return 75
+        case "success":
+            return 100;
+        default:
+            return 0;
+    }
 }

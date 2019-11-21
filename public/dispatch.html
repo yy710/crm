@@ -97,6 +97,10 @@
         methods: {
             sendDispatch() {
                 //window.console.log(this.$data);
+                if(!this.employer.name){
+                    vant.Dialog({ title: '提示', message: '请选择需指派的顾问！' });
+                    return;
+                }
                 axios
                     .get("/yz/referred/dispatch", {
                         params: {

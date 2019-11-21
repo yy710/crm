@@ -5,8 +5,8 @@ const sentMsg = require('./sent-msg');
 
 const act = new Map([
     ["new", " 新建信息"],
-    ["dispatch", "指派顾问"],
-    ["accept", "接受指派"],
+    ["dispatched", "指派顾问"],
+    ["accepted", "接受指派"],
     ["proceed", "洽谈中"],
     ["success", "已成交"],
     ["ordered", "已订车"],

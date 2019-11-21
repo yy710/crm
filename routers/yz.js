@@ -4,6 +4,7 @@ const getUser = require('../get-user');
 const sign = require('../sign');
 const referred = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
+const config = require('../config.json');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -74,7 +75,29 @@ module.exports = function (express) {
 
     routerReferred.use('/get-referreds', (req, res, next) => {
         console.log("req.query", req.query);
-        res.json({ msg: "ok" });
+
+        const admins = config.referred.adminId.split('|');
+        //console.log("admins: ", admins)
+
+        function myReferreds(isAdmin) {
+            const col = req.data.db.collection('referreds');
+            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(20).toArray();
+            return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
+        }
+
+        // checout is admin?
+        let isAdmin = false;
+        for (i = 0; i < admins.length; i++) {
+            if (req.query.op == admins[i]) {
+                isAdmin = true;
+                break;
+            }
+        }
+
+        myReferreds(isAdmin)
+            //.then(log("myReferreds(): "))
+            .then(r => res.json({ msg: "ok", referreds: r }))
+            .catch(err => console.log(err));
     });
 
     routerReferred.use('/commit', referred.commit(), (req, res, next) => {
@@ -116,4 +139,11 @@ function getParamValue(url, key) {
     const ret = url.match(regex);
     if (ret != null) return (ret[1]);
     return null;
+}
+
+function log(str) {
+    return r => {
+        console.log(str, r);
+        return Promise.resolve(r);
+    };
 }
