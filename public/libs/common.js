@@ -54,7 +54,7 @@ function state2num(state) {
     switch (state) {
         case "new":
             return 10;
-        case "dispathed":
+        case "dispatched":
             return 30;
         case "accepted":
             return 45;
