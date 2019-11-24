@@ -23,7 +23,7 @@
 <body>
     <div id="app">
         <van-cell-group title="转介绍信息">
-            <van-cell title="客户信息：" :value="customer" icon="friends-o" label="来源类别：转介绍"></van-cell>
+            <van-cell title="客户信息：" :value="customer" icon="friends-o"></van-cell>
             <van-cell title="介绍人信息：" :value="from"></van-cell>
             <van-cell title="录入人员：" :value="operator.name"></van-cell>
             <van-cell title="建议指派顾问：" :value="preEmployer"></van-cell>
@@ -79,7 +79,7 @@
                 source: '转介绍'
             }
         },
-        mounted: function () {
+        beforeMount: function () {
             getTicket()
                 .then(r => this.operator = r)
                 .then(r => getReferred(referredid))

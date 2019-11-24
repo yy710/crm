@@ -38,7 +38,7 @@
                 tracks: []
             }
         },
-        mounted: function () {
+        beforeMount: function () {
             //getTicket().then(r => this.operator = r);
             getReferred(referredid).then(r => {
                 //console.log(r);

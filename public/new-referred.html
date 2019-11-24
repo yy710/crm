@@ -73,7 +73,7 @@
                 id: ''
             }
         },
-        mounted: function () {
+        beforeMount: function () {
             getTicket()
                 .then(r => this.operator = r)
                 .catch(err => console.log(err));
