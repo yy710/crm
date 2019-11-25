@@ -31,7 +31,7 @@ module.exports = function (express) {
 
     routerReferred.get('/msg', replyEchostr());
 
-    routerReferred.post('/msg', handleMsg(), referred.accept());
+    routerReferred.post('/msg', handleMsg(), referred.accept(), referred.dispatchPre());
 
     routerReferred.use('/dispatch',
         (req, res, next) => {
@@ -54,7 +54,7 @@ module.exports = function (express) {
         },
         referred.new(),
         (req, res, next) => {
-            res.json({ err: 0, msg: "保存成功！" });
+            res.json({ err: 0, msg: "新信息创建成功！" });
         });
 
     routerReferred.use('/getToken',
@@ -81,7 +81,7 @@ module.exports = function (express) {
 
         function myReferreds(isAdmin) {
             const col = req.data.db.collection('referreds');
-            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(20).toArray();
+            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(30).toArray();
             return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
         }
 

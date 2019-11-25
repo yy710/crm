@@ -4,7 +4,9 @@ const corpID = "ww29233ad949e808bf";
 
 const act = new Map([
     ["new", " 新建信息"],
+    ["dispatch", "指派顾问"],
     ["dispatched", "指派顾问"],
+    ["accept", "接受指派"],
     ["accepted", "接受指派"],
     ["proceed", "洽谈中"],
     ["success", "已成交"],
@@ -53,18 +55,25 @@ function getParamValue(url, key) {
 function state2num(state) {
     switch (state) {
         case "new":
-            return 10;
+            return 0;
         case "dispatched":
-            return 30;
+            return 20;
         case "accepted":
-            return 45;
+            return 40;
         case "proceed":
             return 60;
         case "ordered":
-            return 75
+            return 80
         case "success":
             return 100;
         default:
             return 0;
     }
+}
+
+function log(txt) {
+    return r => {
+        console.log(text, r);
+        return Promise.resolve(r);
+    };
 }

@@ -26,25 +26,27 @@
             <van-cell title="客户信息：" :value="customer" icon="friends-o"></van-cell>
             <van-cell title="介绍人信息：" :value="from"></van-cell>
             <van-cell title="录入人员：" :value="operator.name"></van-cell>
-            <van-cell title="建议指派顾问：" :value="preEmployer"></van-cell>
+            <van-cell title="建议指派顾问：" :value="preEmployerName"></van-cell>
             <van-cell title="已指派顾问：" :value="employer.name" label="确认后系统将自动通知！">
                 <!-- 使用 right-icon 插槽来自定义右侧图标 -->
                 <van-icon slot="right-icon" :name="employer.avatar" style="line-height: inherit;" size=50></van-icon>
             </van-cell>
         </van-cell-group>
         <van-radio-group v-model="source">
-                <van-cell-group title="选择信息来源：">
-                    <van-cell title="转介绍" clickable @click="radio = '转介绍'">
-                        <van-radio slot="right-icon" name="转介绍"></van-radio>
-                    </van-cell>
-                    <van-cell title="保客营销" clickable @click="radio = '保客营销'">
-                        <van-radio slot="right-icon" name="保客营销"></van-radio>
-                    </van-cell>
-                </van-cell-group>
-            </van-radio-group>
+            <van-cell-group title="选择信息来源：">
+                <van-cell title="转介绍" clickable @click="radio = '转介绍'">
+                    <van-radio slot="right-icon" name="转介绍"></van-radio>
+                </van-cell>
+                <van-cell title="保客营销" clickable @click="radio = '保客营销'">
+                    <van-radio slot="right-icon" name="保客营销"></van-radio>
+                </van-cell>
+            </van-cell-group>
+        </van-radio-group>
         <van-cell>
-            <van-button size="small" type="primary" @click="dispatchEmployer">重新分配</van-button>
-            <van-button size="small" type="danger" @click="sendDispatch">分配确认</van-button>
+            <van-button type="danger" @click="sendDispatch" style="width: 100%;">确认指派(建议)顾问</van-button>
+        </van-cell>
+        <van-cell>
+            <van-button type="primary" @click="dispatchEmployer" style="width: 100%;">重新指派顾问</van-button>
         </van-cell>
     </div>
 </body>
@@ -83,21 +85,26 @@
             getTicket()
                 .then(r => this.operator = r)
                 .then(r => getReferred(referredid))
+                //.then(log("get referred: "))
                 .then(r => {
-                    console.log(r);
+                    if (r.state != "new") vant.Dialog.alert({ message: "顾问已接受指派的订单，\n不能重新指派！！！" }).then(wx.closeWindow);
+                    else if (r.order.dispatch_employer.name != '') {
+                        vant.Dialog.confirm({ title: "提示", message: "已指派过顾问！！！", confirmButtonText: "重新指派顾问", cancelButtonText: "返回" }).then(r => wx.ready(this.dispatchEmployer)).catch(wx.closeWindow);
+                    }
+
                     this.customer = r.order.potential_customer.name + '---' + r.order.potential_customer
                         .phone;
                     this.from = r.order.from_customer.name + '---' + r.order.from_customer.phone;
                     this.operator = r.tracks[0].operator;
-                    this.preEmployer = r.tracks[0].data.preEmployer || '';
+                    this.preEmployerName = r.tracks[0].data.preEmployerName || '';
+                    //wx.ready(this.dispatchEmployer);
                 }).catch(err => console.log(err));
-            wx.ready(this.dispatchEmployer);
             //wx.error(function (res) {});
         },
         methods: {
             sendDispatch() {
                 //window.console.log(this.$data);
-                if(!this.employer.name){
+                if (!this.employer.name) {
                     vant.Dialog({ title: '提示', message: '请选择需指派的顾问！' });
                     return;
                 }
@@ -118,10 +125,10 @@
             dispatchEmployer: () => {
                 wx.invoke(
                     "selectEnterpriseContact", {
-                        "fromDepartmentId": 9, // 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
-                        "mode": "single", // 必填，选择模式，single表示单选，multi表示多选
-                        "type": ["user"] // 必填，选择限制类型，指定department、user中的一个或者多个
-                    },
+                    "fromDepartmentId": 9, // 必填，表示打开的通讯录从指定的部门开始展示，-1表示自己所在部门开始, 0表示从最上层开始
+                    "mode": "single", // 必填，选择模式，single表示单选，multi表示多选
+                    "type": ["user"] // 必填，选择限制类型，指定department、user中的一个或者多个
+                },
                     res => {
                         if (res.err_msg == "selectEnterpriseContact:ok") {
                             if (typeof res.result == 'string') {

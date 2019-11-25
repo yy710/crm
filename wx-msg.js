@@ -58,10 +58,7 @@ function handleMsg() {
         // Failed
       });
 
-    res.send({
-      status: 200,
-      data: "success"
-    })
+    res.send({ status: 200, data: "success" });
   };
 }
 
@@ -90,7 +87,7 @@ function temp() {
 function getArray0(defaults) {
   let newObject = {};
   for (var key in defaults) {
-      newObject[key] = defaults[key][0];
+    newObject[key] = defaults[key][0];
   }
   return newObject;
 }

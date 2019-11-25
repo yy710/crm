@@ -14,9 +14,24 @@ const act = new Map([
 ]);
 
 module.exports = {
+    findDup() {
+        return (req, res, next) => {
+            next();
+        };
+    },
     new() {
         return (req, res, next) => {
             // create new referred data
+            /**
+             * req.query
+             *      customerName: 客户姓名,
+                    customerPhone: 客户电话,
+                    carType: 意向车型,
+                    fromName: 介绍人姓名,
+                    fromPhone: 介绍人电话,
+                    preEmployerName: 建议指派顾问姓名,
+                    operator: { id, name, mobile} 创建人信息
+             */
             req.data.referred = {
                 // 识别ID， 16个字符随机字符串
                 id: randomString(16),
@@ -44,17 +59,34 @@ module.exports = {
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
                 "btntxt": "指派顾问"
             };
+            const taskcard = {
+                "title": "有新转介绍信息",
+                "description": createDesc1(req.data.referred),
+                "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
+                "task_id": 'new' + req.data.referred.id,
+                "btn": [
+                    {
+                        "key": "new",
+                        "name": "直接指派建议顾问",
+                        "replace_name": "已指派顾问",
+                        "color": "red",
+                        "is_bold": true
+                    }
+                ]
+            };
             // write new referred to db and send textcard to dispatcher
             req.data.db.collection('referreds')
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
-                .then(r => sentMsg.init().sentTextcard(textcard))
+                //.then(r => sentMsg.init().sentTextcard(textcard))
+                .then(r => sentMsg.init({ touser: 'YuChunJian' }).sentTaskcard(taskcard))
+                .then(log("sendTaskcard: "))
                 .then(r => next())
                 .catch(err => console.log(err));
         };
     },
     dispatch() {
         return (req, res, next) => {
-            console.log("req.query", req.query);
+            console.log("dispatch req.query", req.query);
             const col = req.data.db.collection('referreds');
             // get admin info from adminId
             // write action "dispatch" to object of referred
@@ -84,6 +116,13 @@ module.exports = {
                     // send taskcard to empoyer 
                     return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard);
                 })
+                // 更新任务卡片消息状态
+                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`, {
+                    "userids": ["YuChunJian"],
+                    "agentid": config.referred.agentid,
+                    "task_id": 'new' + req.query.referredid,
+                    "clicked_key": "new"
+                }))
                 .then(r => next())
                 .catch(err => console.log(err));
         };
@@ -113,7 +152,46 @@ module.exports = {
                     { id: post.TaskId },
                     { $addToSet: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
                     { upsert: false })
+                    .then(r => next())
                     .catch(err => console.log(err))
+            }
+        };
+    },
+    dispatchPre() {
+        return (req, res, next) => {
+            const post = req.data.post;
+            if (post.EventKey != 'new' || post.Event != 'taskcard_click') next();
+            else {
+                // get user list
+                axios.get(`https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=${global.token.access_token}&department_id=22&fetch_child=0`)
+                    /**
+                     * r.data: {
+                    "errcode": 0,
+                    "errmsg": "ok",
+                    "userlist": [
+                      {
+                      "userid": "zhangsan",
+                      "name": "李四",
+                      "department": [1, 2]
+                       }
+                     ]
+                    }
+                     */
+                    .then(r => {
+                        assert.equal(0, r.data.errcode);
+                        const col = req.data.db.collection('referreds');
+                        return col.findOne({ id: post.TaskId.substr(3) }).then(doc => {
+                            // find user in corp
+                            return r.data.userlist.find(element => {
+                                return element.name == doc.tracks[0].data.preEmployerName;
+                            });
+                        });
+                    })
+                    .then(log("userlist.find(): "))
+                    .then(r => next())
+                    .catch(err => console.log(err));
+
+                // dispatch
             }
         };
     },
@@ -147,7 +225,7 @@ module.exports = {
                     ><font color="comment">状态更新说明：${req.query.message}</font>
                     >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
 
-                    return sentMsg.init().sendMarkdown(content);
+                    return sentMsg.init({ touser: "YuChunJian" }).sendMarkdown(content);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
@@ -172,11 +250,11 @@ function createDesc1(ref) {
     const od = ref.order;
     const op = ref.tracks[0].operator;
     let desc = `<div class=\"gray\">${(new Date()).toLocaleString()}</div>`;
-    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
+    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name || ''}---${od.potential_customer.phone || ''}</div>`;
     desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
     desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
     desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.mobile || ''}</div>`;
-    desc += `<div class=\"gray\">建议指派顾问：${ref.tracks[0].data.preEmployer || ''}</div>`;
+    desc += `<div class=\"gray\">建议指派顾问：${ref.tracks[0].data.preEmployerName || ''}</div>`;
     return desc;
 }
 
@@ -184,7 +262,7 @@ function createDesc2(ref) {
     const od = ref.order;
     const op = ref.tracks[0].operator;
     let desc = `<div class=\"gray\">${(new Date()).toLocaleString()}</div>`;
-    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name}---${od.potential_customer.phone}</div>`;
+    desc += `<div class=\"highlight\">被介绍客户：${od.potential_customer.name || ''}---${od.potential_customer.phone || ''}</div>`;
     desc += `<div class=\"highlight\">意向车型：${od.carType || ''}</div>`;
     desc += `<div class=\"normal\">介绍人：${od.from_customer.name || ''}---${od.from_customer.phone || ''}</div>`;
     desc += `<div class=\"normal\">信息来源：${od.source_type || ''}</div>`;
@@ -206,4 +284,11 @@ function getArray0(defaults) {
         newObject[key] = defaults[key][0];
     }
     return newObject;
+}
+
+function log(txt) {
+    return r => {
+        console.log(txt, r);
+        return Promise.resolve(r);
+    }
 }
