@@ -79,14 +79,16 @@ module.exports = {
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
                 //.then(r => sentMsg.init().sentTextcard(textcard))
                 .then(r => sentMsg.init({ touser: 'YuChunJian' }).sentTaskcard(taskcard))
-                .then(log("sendTaskcard: "))
+                //.then(log("sendTaskcard: "))
                 .then(r => next())
                 .catch(err => console.log(err));
         };
     },
     dispatch() {
         return (req, res, next) => {
+            // req.query: { employer, operator, referredid, source }
             console.log("dispatch req.query", req.query);
+
             const col = req.data.db.collection('referreds');
             // get admin info from adminId
             // write action "dispatch" to object of referred
@@ -164,19 +166,7 @@ module.exports = {
             else {
                 // get user list
                 axios.get(`https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=${global.token.access_token}&department_id=22&fetch_child=0`)
-                    /**
-                     * r.data: {
-                    "errcode": 0,
-                    "errmsg": "ok",
-                    "userlist": [
-                      {
-                      "userid": "zhangsan",
-                      "name": "李四",
-                      "department": [1, 2]
-                       }
-                     ]
-                    }
-                     */
+                    // r.data: { "errcode": 0, "errmsg": "ok", "userlist": [{"userid": "zhangsan", "name": "李四", "department": [1, 2]}]}
                     .then(r => {
                         assert.equal(0, r.data.errcode);
                         const col = req.data.db.collection('referreds');
@@ -188,7 +178,11 @@ module.exports = {
                         });
                     })
                     .then(log("userlist.find(): "))
-                    .then(r => next())
+                    .then(r => {
+                        // set req.query to dispatch middleware
+                        req.query = { employer: { id: r.userid, name: r.name, department: r.department }, operator: { id: post.FromUserName }, referredid: post.TaskId.substr(3), source: "转介绍" };
+                        next();
+                    })
                     .catch(err => console.log(err));
 
                 // dispatch

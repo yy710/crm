@@ -66,6 +66,8 @@ function state2num(state) {
             return 80
         case "success":
             return 100;
+        case "fail":
+            return 100;
         default:
             return 0;
     }

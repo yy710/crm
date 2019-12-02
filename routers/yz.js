@@ -5,6 +5,7 @@ const sign = require('../sign');
 const referred = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
 const config = require('../config.json');
+const XLSX = require('xlsx');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -31,7 +32,67 @@ module.exports = function (express) {
 
     routerReferred.get('/msg', replyEchostr());
 
-    routerReferred.post('/msg', handleMsg(), referred.accept(), referred.dispatchPre());
+    routerReferred.post('/msg', handleMsg(), referred.accept(), referred.dispatchPre(), (req, res, next) => console.log("dispatchPre() set req.query = ", req.query));
+
+    routerReferred.get('/download', function (req, res, next) {
+        const col = req.data.db.collection('referreds');
+        col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).toArray().then(r => {
+            const act = new Map([
+                ["new", " 新建信息"],
+                ["dispatch", "指派顾问"],
+                ["dispatched", "指派顾问"],
+                ["accept", "接受指派"],
+                ["accepted", "接受指派"],
+                ["proceed", "洽谈中"],
+                ["success", "已成交"],
+                ["ordered", "已订车"],
+                ["fail", "战败"]
+            ]);
+            const _r = r.map(item => {
+                return {
+                    "订单号": item.id,
+                    "订单状态": act.get(item.state),
+                    "客户姓名": item.order.potential_customer.name,
+                    "客户电话": item.order.potential_customer.phone || item.order.potential_customer.mobile,
+                    "介绍人姓名": item.order.from_customer.name,
+                    "介绍人电话": item.order.from_customer.phone || item.order.from_customer.mobile,
+                    "创建人姓名": item.tracks[0].data.operator.name,
+                    "创建人电话": item.tracks[0].data.operator.phone || item.tracks[0].data.operator.mobile,
+                    "订单创建时间": item.tracks[0].update_time.toLocaleString(),
+                    "指派顾问": item.order.dispatch_employer.name,
+                    "意向车型": item.order.carType,
+                    "来源类型": item.order.source_type
+                };
+            });
+            //console.log(_r);
+            /* converts an array of JS objects to a worksheet */
+            const worksheet = XLSX.utils.json_to_sheet(_r);
+            let new_workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(new_workbook, worksheet, "SheetJS");
+            dl();
+
+            function dl2(params) {
+                /* output format determined by filename */
+                const url = XLSX.writeFile(new_workbook, 'out.xlsx');
+                res.download('./out.xlsx');
+            }
+
+            function dl(params) {
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                /* at this point, out.xlsb will have been downloaded */
+                res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent("谊众转介绍信息")}.xlsx";`);
+                //res.setHeader('Content-Type', 'application/vnd.ms-excel;');
+                //res.setHeader('Content-Type', 'application/vnd.openxmlformats;charset=utf-8');
+                //res.setHeader('Content-Type', 'application/octet-stream;charset=utf-8');
+                //res.setHeader('Content-Transfer-Encoding', 'binary');
+                //res.setHeader('Content-Type', 'text/html;');
+                res.end(XLSX.write(new_workbook, { type: "buffer", bookType: 'xlsx' }));
+                //res.status(200).send(XLSX.write(new_workbook, { type: "buffer", bookType: "xlsx" }));
+            }
+
+        }).catch(err => console.log(err));
+        //res.json({msg: "ok!"});
+    });
 
     routerReferred.use('/dispatch',
         (req, res, next) => {
@@ -81,7 +142,7 @@ module.exports = function (express) {
 
         function myReferreds(isAdmin) {
             const col = req.data.db.collection('referreds');
-            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(30).toArray();
+            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(50).toArray();
             return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
         }
 
