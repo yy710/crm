@@ -36,6 +36,11 @@ exports.init = function (msg = {}) {
     return this;
 };
 
+exports.addToUser = function(user){
+    this.msg.touser += `|${user}`;
+    return this;
+};
+
 exports.sentTextcard = function (textcard = {}) {
     const _textcard = {
         "title": "领奖通知",

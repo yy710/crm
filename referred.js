@@ -67,7 +67,7 @@ module.exports = {
                 "btn": [
                     {
                         "key": "new",
-                        "name": "直接指派建议顾问",
+                        "name": "指派建议顾问",
                         "replace_name": "已指派顾问",
                         "color": "red",
                         "is_bold": true
@@ -78,7 +78,7 @@ module.exports = {
             req.data.db.collection('referreds')
                 .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
                 //.then(r => sentMsg.init().sentTextcard(textcard))
-                .then(r => sentMsg.init({ touser: 'YuChunJian' }).sentTaskcard(taskcard))
+                .then(r => sentMsg.init().sentTaskcard(taskcard))
                 //.then(log("sendTaskcard: "))
                 .then(r => next())
                 .catch(err => console.log(err));
@@ -88,45 +88,51 @@ module.exports = {
         return (req, res, next) => {
             // req.query: { employer, operator, referredid, source }
             console.log("dispatch req.query", req.query);
-
-            const col = req.data.db.collection('referreds');
-            // get admin info from adminId
-            // write action "dispatch" to object of referred
-            col.updateOne(
-                { id: req.query.referredid },
-                { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched", "order.source_type": req.query.source } },
-                { upsert: false })
-                // get referred from referredid
-                .then(r => col.findOne({ id: req.query.referredid }))
-                .then(r => {
-                    //const taskid = randomString();
-                    const taskcard = {
-                        "title": "收到指派的转介绍任务",
-                        "description": createDesc2(r),
-                        "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}&employerid=${req.query.employer.id}`,
-                        "task_id": req.query.referredid,
-                        "btn": [
-                            {
-                                "key": "accept",
-                                "name": "点击接受任务",
-                                "replace_name": "已接受任务",
-                                "color": "red",
-                                "is_bold": true
-                            }
-                        ]
-                    };
-                    // send taskcard to empoyer 
-                    return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard);
-                })
-                // 更新任务卡片消息状态
-                .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`, {
-                    "userids": ["YuChunJian"],
-                    "agentid": config.referred.agentid,
-                    "task_id": 'new' + req.query.referredid,
-                    "clicked_key": "new"
-                }))
-                .then(r => next())
-                .catch(err => console.log(err));
+            if (!req.query.employer || !req.query.referredid) {
+                next();
+            }
+            else {
+                const col = req.data.db.collection('referreds');
+                // get admin info from adminId
+                // write action "dispatch" to object of referred
+                col.updateOne(
+                    { id: req.query.referredid },
+                    { $addToSet: { tracks: { action: "dispatch", update_time: new Date(), operator: { id: config.referred.adminId }, data: req.query } }, $set: { "order.dispatch_employer": req.query.employer, "state": "dispatched", "order.source_type": req.query.source } },
+                    { upsert: false })
+                    // get referred from referredid
+                    .then(r => col.findOne({ id: req.query.referredid }))
+                    .then(r => {
+                        //const taskid = randomString();
+                        const taskcard = {
+                            "title": "收到指派的转介绍任务",
+                            "description": createDesc2(r),
+                            "url": `http://www.all2key.cn/show-task.html?referredid=${req.query.referredid}&employerid=${req.query.employer.id}`,
+                            "task_id": req.query.referredid,
+                            "btn": [
+                                {
+                                    "key": "accept",
+                                    "name": "点击接受任务",
+                                    "replace_name": "已接受任务",
+                                    "color": "red",
+                                    "is_bold": true
+                                }
+                            ]
+                        };
+                        // send taskcard to empoyer 
+                        return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard);
+                    })
+                    // 更新任务卡片消息状态
+                    .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`, {
+                        "userids": ["YuChunJian"],
+                        "agentid": config.referred.agentid,
+                        "task_id": 'new' + req.query.referredid,
+                        "clicked_key": "new"
+                    }))
+                    .then(r => {
+                        if (!req.query.response) res.json({ err: 0, msg: "顾问指派成功！" });
+                    })
+                    .catch(err => console.log(err));
+            }
         };
     },
     accept() {
@@ -146,24 +152,24 @@ module.exports = {
              */
             //const post = getArray0(req.data.post);
             const post = req.data.post;
-            if (post.EventKey != 'accept' || post.Event != 'taskcard_click') next();
-            else {
+            if (post.EventKey == 'accept' && post.Event == 'taskcard_click') {
                 const col = req.data.db.collection('referreds');
                 console.log("handle accept!");
                 col.updateOne(
                     { id: post.TaskId },
                     { $addToSet: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
                     { upsert: false })
-                    .then(r => next())
+                    //.then(r => res.send('success'))
                     .catch(err => console.log(err))
+            } else {
+                next();
             }
         };
     },
     dispatchPre() {
         return (req, res, next) => {
             const post = req.data.post;
-            if (post.EventKey != 'new' || post.Event != 'taskcard_click') next();
-            else {
+            if (post.EventKey == 'new' && post.Event == 'taskcard_click') {
                 // get user list
                 axios.get(`https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=${global.token.access_token}&department_id=22&fetch_child=0`)
                     // r.data: { "errcode": 0, "errmsg": "ok", "userlist": [{"userid": "zhangsan", "name": "李四", "department": [1, 2]}]}
@@ -180,12 +186,19 @@ module.exports = {
                     .then(log("userlist.find(): "))
                     .then(r => {
                         // set req.query to dispatch middleware
-                        req.query = { employer: { id: r.userid, name: r.name, department: r.department }, operator: { id: post.FromUserName }, referredid: post.TaskId.substr(3), source: "转介绍" };
+                        req.query = {
+                            employer: { id: r.userid, name: r.name, department: r.department },
+                            operator: { id: post.FromUserName },
+                            referredid: post.TaskId.substr(3),
+                            source: "转介绍",
+                            response: false
+                        };
                         next();
                     })
                     .catch(err => console.log(err));
-
                 // dispatch
+            } else {
+                next();
             }
         };
     },
@@ -205,7 +218,6 @@ module.exports = {
                 { upsert: false })
                 // get referred
                 .then(r => col.findOne({ id: req.query.referredid }))
-                // send msg to admin
                 .then(r => {
                     const content = `转介绍订单状态变化通知
                     >**订单详情** 
@@ -218,16 +230,11 @@ module.exports = {
                     ><font color="warning">现在状态：${act.get(r.state)}</font>
                     ><font color="comment">状态更新说明：${req.query.message}</font>
                     >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
-
-                    return sentMsg.init({ touser: "YuChunJian" }).sendMarkdown(content);
+                    // send msg to admin and creater
+                    return sentMsg.init().addToUser(r.tracks[0].operator.id).sendMarkdown(content);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
-        };
-    },
-    end() {
-        return (req, res, next) => {
-
         };
     }
 };

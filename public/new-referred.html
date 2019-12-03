@@ -65,7 +65,7 @@
         data: {
             customerName: null,
             customerPhone: null,
-            carTypes: ['宝来', '速腾', '迈腾', '高尔夫', '嘉旅', 'CC', '探歌', '探岳'],
+            carTypes: ['宝来', '速腾', '迈腾', '高尔夫', '嘉旅', 'CC', '探歌', '探岳', '捷达VA3', '捷达VS5'],
             carType: '',
             showPicker: false,
             fromName: null,
@@ -100,13 +100,6 @@
                 return reg.test(e) ? null : '号码错误！';
             },
             sendNewReferred() {
-                //window.console.log(this.$data);
-                // valid input field
-                if (!this.customerName || !this.customerPhone || this.telErrMsgA || this.telErrMsgB || !this.fromName || !this.fromPhone) {
-                    vant.Dialog({ message: "请正确填写客户及介绍人信息！" });
-                    //this.disableButton = true;
-                    return;
-                }
                 const sendData = {
                     customerName: this.customerName,
                     customerPhone: this.customerPhone,
@@ -116,17 +109,33 @@
                     preEmployerName: this.preEmployerName,
                     operator: this.operator
                 };
-                //console.log("send data: ", sendData);
-                //return;
-                //this.disableButton = false;
 
-                // send data to server
-                axios
-                    .get("/yz/referred/new", { params: sendData })
-                    //.then(r => window.alert(r.data.msg))
-                    .then(r => vant.Toast.success(r.data.msg))
-                    .then(r => setTimeout(wx.closeWindow, 2000))
-                    .catch(err => vant.Toast.fail("信息创建失败！"));
+                if (!this.customerName || !this.customerPhone || this.telErrMsgA || this.telErrMsgB || !this.fromName || !this.fromPhone) {
+                    vant.Dialog({ message: "请正确填写客户及介绍人信息！" });
+                    //this.disableButton = true;
+                    return;
+                }
+
+                getReferred('', this.customerPhone)
+                    .then(r => {
+                        if (r) {
+                            return vant.Dialog.confirm({ title: "提示", message: "已有相同转介绍订单，是否覆盖订单信息？", confirmButtonText: "是", cancelButtonText: "否" })
+                                .then(r => send(sendData))
+                                .catch(wx.closeWindow);
+                        }
+                        return send(sendData);
+                    })
+                    .catch(err => console.log(err));
+
+                function send(data) {
+                    // send data to server
+                    return axios
+                        .get("/yz/referred/new", { params: data })
+                        //.then(r => window.alert(r.data.msg))
+                        .then(r => vant.Toast.success(r.data.msg))
+                        .then(r => setTimeout(wx.closeWindow, 2000))
+                        .catch(err => vant.Toast.fail("信息创建失败！"));
+                }
             }
         }
     })

@@ -56,7 +56,10 @@
         beforeMount: function () {
             //getTicket().then(r => this.operator = r);
             getReferred(referredid).then(r => {
-                console.log(r);
+                //console.log(r);
+                const track = r.tracks.pop();
+                this.state = track.data.state;
+                this.message = track.data.message;
             });
         },
         methods: {

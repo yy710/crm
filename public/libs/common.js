@@ -39,8 +39,8 @@ function getTicket() {
         .catch(err => console.log(err));
 }
 
-function getReferred(id) {
-    return axios.get(`/yz/referred/get-referred?id=${id}`)
+function getReferred(id='', customerPhone='') {
+    return axios.get(`/yz/referred/get-referred?id=${id}&customerPhone=${customerPhone}`)
         .then(r => r.data)
         .catch(err => console.log(err));
 }

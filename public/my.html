@@ -38,7 +38,12 @@
                     </van-col>
                     <van-col span="11">
                         <van-progress :percentage="state2num(rd.state)" stroke-width="8" color="#f2826a"
-                            :pivot-text="act.get(rd.state)"></van-progress>
+                            :pivot-text="act.get(rd.state)" :inactive="rd.state=='fail'"></van-progress>
+                    </van-col>
+                </van-row>
+                <van-row gutter="20">
+                    <van-col span="6">创建时间：</van-col>
+                    <van-col span="18">{{ (new Date(rd.tracks[0].update_time)).toLocaleString() }}
                     </van-col>
                 </van-row>
                 <van-row gutter="20">
@@ -84,7 +89,6 @@
                 .then(r => {
                     //console.log("referreds: ", r.data.referreds);
                     this.referreds = r.data.referreds;
-                    //this.activeNames = r.data.referreds.map(rd => rd.id);
                 })
                 .catch(err => console.log(err));
         },
@@ -94,11 +98,11 @@
             },
             download() {
                 /* converts an array of JS objects to a worksheet */
-                const worksheet = XLSX.utils.json_to_sheet({a: 1});
-                let new_workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(new_workbook, worksheet, "SheetJS");
+                // const worksheet = XLSX.utils.json_to_sheet({a: 1});
+                // let new_workbook = XLSX.utils.book_new();
+                // XLSX.utils.book_append_sheet(new_workbook, worksheet, "SheetJS");
                 /* output format determined by filename */
-                XLSX.writeFile(new_workbook, 'out.xlsx');
+                // XLSX.writeFile(new_workbook, 'out.xlsx');
                 /* at this point, out.xlsb will have been downloaded */
             }
         }

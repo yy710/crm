@@ -15,8 +15,6 @@ const config = require('./config.json');
 global.config = config;
 
 // 载入自定义模块
-const AccessToken = require('./access_token.js');
-const Referred = require('./referred.js').default;
 
 // 创建 http 服务
 const app = express();

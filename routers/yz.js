@@ -32,7 +32,15 @@ module.exports = function (express) {
 
     routerReferred.get('/msg', replyEchostr());
 
-    routerReferred.post('/msg', handleMsg(), referred.accept(), referred.dispatchPre(), (req, res, next) => console.log("dispatchPre() set req.query = ", req.query));
+    routerReferred.post('/msg',
+        handleMsg(),
+        referred.accept(),
+        referred.dispatchPre(),
+        (req, res, next) => {
+            console.log("dispatchPre() set req.query = ", req.query);
+            next();
+        },
+        referred.dispatch());
 
     routerReferred.get('/download', function (req, res, next) {
         const col = req.data.db.collection('referreds');
@@ -102,10 +110,7 @@ module.exports = function (express) {
             console.log("req.query: \n", req.query);
             next();
         },
-        referred.dispatch(),
-        (req, res, next) => {
-            res.json({ err: 0, msg: "分配成功！" });
-        });
+        referred.dispatch());
 
     routerReferred.use('/new',
         (req, res, next) => {
@@ -128,7 +133,9 @@ module.exports = function (express) {
 
     routerReferred.use('/get-referred', (req, res, next) => {
         const rid = req.query.id;
-        req.data.db.collection('referreds').findOne({ id: rid }).then(r => {
+        const rphone = req.query.customerPhone;
+        const query = rid ? { id: rid } : { "order.potential_customer.phone": rphone };
+        req.data.db.collection('referreds').findOne(query).then(r => {
             console.log("get-referred: ", r);
             res.json(r);
         }).catch(err => console.log(err));
