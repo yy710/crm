@@ -1,13 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
-
-function mergeOptions(options, defaults) {
-    for (var key in defaults) {
-        options[key] = options[key] || defaults[key];
-    }
-    return options;
-}
+const { mergeOptions } = require('./common');
 
 exports.init = function (msg = {}) {
     assert.notEqual(null, global.token.access_token);

@@ -44,7 +44,7 @@ module.exports = {
                     from_customer: { id: 0, name: req.query.fromName, phone: req.query.fromPhone },
                     creater: req.query.operator,
                     carType: req.query.carType,
-                    source_type: ''
+                    source_type: '转介绍'
                 },
                 // 订单当前状态
                 state: "new",
@@ -80,8 +80,8 @@ module.exports = {
                 ]
             };
             const col = req.data.db.collection('referreds');
-            await sentMsg.init().sentTaskcard(taskcard);
-            referred.sendMsgs.push(sentMsg.msg);
+            await sentMsg.init({ touser: 'YuChunJian' }).sentTaskcard(taskcard);
+            referred.sendMsgs.push({ msgtype: sentMsg.msg.msgtype, touser: sentMsg.msg.touser, task_id: taskcard.task_id });
             await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
             req.data.referred = referred;
             next();
