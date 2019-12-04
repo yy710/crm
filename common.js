@@ -8,4 +8,89 @@ const act = new Map([
     ["fail", "战败"]
 ]);
 
-module.exports = { act };
+function getParamValue(url, key) {
+    const regex = new RegExp(key + "=([^&]*)", "i");
+    const ret = url.match(regex);
+    if (ret != null) return (ret[1]);
+    return null;
+}
+
+function mergeOptions(options, defaults) {
+    for (var key in defaults) {
+        options[key] = options[key] || defaults[key];
+    }
+    return options;
+}
+
+function getArray0(defaults) {
+    let newObject = {};
+    for (var key in defaults) {
+        newObject[key] = defaults[key][0];
+    }
+    return newObject;
+}
+
+function randomString(length = 8) {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
+}
+
+function log(text) {
+    return r => {
+        console.log(text, r);
+        return Promise.resolve(r);
+    };
+}
+
+class TaskQuery {
+    constructor() {
+        this.tasks = [];
+        this.ctx = {};
+    }
+
+    _delay(s) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(() => {
+                resolve();
+            }, s * 1000);
+        });
+    }
+
+    /**
+     * add method to query
+     * @param {function} fn
+     */
+    use(fn) {
+        this.tasks.push(fn);
+        return this;
+    }
+
+    /**
+     * delay seconds
+     * @param {int} s 
+     */
+    exec(s = 0, c = true) {
+        const next = async () => {
+            if (this.tasks.length === 0 || c === false) return;
+            const task = this.tasks.shift();
+            if (s) await this._delay(s);
+            task(this.ctx, next);
+        }
+        next();
+    }
+
+    exec2(s = 0) {
+        const that = this;
+        function next() {
+            if (that.tasks.length === 0) return;
+            const task = that.tasks.shift();
+            if (s) that._delay(s).then(() => task(that.ctx, next));
+            else task(that.ctx, next);
+        }
+        next();
+    }
+}
+
+module.exports = { act, TaskQuery, log, randomString, mergeOptions, getArray0, getParamValue };

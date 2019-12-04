@@ -2,6 +2,8 @@ const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
 const sentMsg = require('./sent-msg');
+const { log, randomString } = require('./common');
+const sendQuery = require('./send_msg_to_users');
 
 const act = new Map([
     ["new", " 新建信息"],
@@ -20,7 +22,7 @@ module.exports = {
         };
     },
     new() {
-        return (req, res, next) => {
+        return async (req, res, next) => {
             // create new referred data
             /**
              * req.query
@@ -32,19 +34,22 @@ module.exports = {
                     preEmployerName: 建议指派顾问姓名,
                     operator: { id, name, mobile} 创建人信息
              */
-            req.data.referred = {
-                // 识别ID， 16个字符随机字符串
+            const referred = {
+                // 订单识别ID， 16个字符随机字符串
                 id: randomString(16),
                 // 订单基础信息，通常不需要更改
                 order: {
                     potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
                     dispatch_employer: { id: 0, name: '', phone: '' },
                     from_customer: { id: 0, name: req.query.fromName, phone: req.query.fromPhone },
+                    creater: req.query.operator,
                     carType: req.query.carType,
                     source_type: ''
                 },
                 // 订单当前状态
                 state: "new",
+                // 发送消息记录
+                sendMsgs: [],
                 // 订单跟踪记录
                 tracks: [{
                     action: "new",
@@ -55,15 +60,15 @@ module.exports = {
             };
             const textcard = {
                 "title": "有新转介绍信息",
-                "description": createDesc1(req.data.referred),
-                "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
+                "description": createDesc1(referred),
+                "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
                 "btntxt": "指派顾问"
             };
             const taskcard = {
                 "title": "有新转介绍信息",
-                "description": createDesc1(req.data.referred),
-                "url": `http://www.all2key.cn/dispatch.html?referredid=${req.data.referred.id}`,
-                "task_id": 'new' + req.data.referred.id,
+                "description": createDesc1(referred),
+                "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
+                "task_id": 'new' + referred.id,
                 "btn": [
                     {
                         "key": "new",
@@ -74,20 +79,27 @@ module.exports = {
                     }
                 ]
             };
-            // write new referred to db and send textcard to dispatcher
-            req.data.db.collection('referreds')
-                .replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
-                //.then(r => sentMsg.init().sentTextcard(textcard))
-                .then(r => sentMsg.init().sentTaskcard(taskcard))
-                //.then(log("sendTaskcard: "))
-                .then(r => next())
-                .catch(err => console.log(err));
+            const col = req.data.db.collection('referreds');
+            await sentMsg.init().sentTaskcard(taskcard);
+            referred.sendMsgs.push(sentMsg.msg);
+            await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+            req.data.referred = referred;
+            next();
+
+            /*  // write new referred to db and send textcard to dispatcher
+             col.replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
+                 //.then(r => sendQuery(['YuChunJian', 'YuChunJian'], taskcard).exec(60))
+                 .then(r => sentMsg.init().sentTaskcard(taskcard))
+                 // write tracks for taskcard
+                 .then(r => req.data.referred.sendMsgs.push(sentMsg.msg))//({ msgtype: "taskcard", touser: sentMsg.touser, task_id: taskcard.task_id, data: taskcard }))
+                 // to next middleware
+                 .then(r => next())
+                 .catch(err => console.log(err)); */
         };
     },
     dispatch() {
         return (req, res, next) => {
             // req.query: { employer, operator, referredid, source }
-            console.log("dispatch req.query", req.query);
             if (!req.query.employer || !req.query.referredid) {
                 next();
             }
@@ -123,13 +135,13 @@ module.exports = {
                     })
                     // 更新任务卡片消息状态
                     .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`, {
-                        "userids": ["YuChunJian"],
+                        "userids": config.referred.adminId.split('|'),
                         "agentid": config.referred.agentid,
                         "task_id": 'new' + req.query.referredid,
                         "clicked_key": "new"
                     }))
                     .then(r => {
-                        if (!req.query.response) res.json({ err: 0, msg: "顾问指派成功！" });
+                        if (!req.query.nores) res.json({ err: 0, msg: "顾问指派成功！" });
                     })
                     .catch(err => console.log(err));
             }
@@ -191,7 +203,7 @@ module.exports = {
                             operator: { id: post.FromUserName },
                             referredid: post.TaskId.substr(3),
                             source: "转介绍",
-                            response: false
+                            nores: true
                         };
                         next();
                     })
@@ -239,13 +251,6 @@ module.exports = {
     }
 };
 
-function randomString(length = 8) {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    return result;
-}
-
 // define textcard for dispatcher
 function createDesc1(ref) {
     const od = ref.order;
@@ -270,26 +275,4 @@ function createDesc2(ref) {
     desc += `<div class=\"gray\">信息创建人：${op.name || ''}---${op.mobile || ''}</div>`;
     desc += `<div class=\"gray\">已指派顾问：${od.dispatch_employer.name || ''}</div>`;
     return desc;
-}
-
-function mergeOptions(options, defaults) {
-    for (var key in defaults) {
-        options[key] = options[key] || defaults[key];
-    }
-    return options;
-}
-
-function getArray0(defaults) {
-    let newObject = {};
-    for (var key in defaults) {
-        newObject[key] = defaults[key][0];
-    }
-    return newObject;
-}
-
-function log(txt) {
-    return r => {
-        console.log(txt, r);
-        return Promise.resolve(r);
-    }
 }

@@ -28,6 +28,7 @@ app.use(bodyParser.json());
 app.use(xmlparser());
 
 app.use(function (req, res, next) {
+    console.log("req.query: ", req.query);
     req.data = {};
     req.data.config = config;
     next();

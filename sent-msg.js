@@ -2,25 +2,11 @@ const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
 
-function randomString(length = 8) {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    return result;
-}
-
 function mergeOptions(options, defaults) {
     for (var key in defaults) {
         options[key] = options[key] || defaults[key];
     }
     return options;
-}
-
-function log(text) {
-    return r => {
-        console.log(text, r);
-        return Promise.resolve(r);
-    };
 }
 
 exports.init = function (msg = {}) {

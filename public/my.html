@@ -33,17 +33,17 @@
                 <van-row slot="title" style="display: flex; align-items: baseline;">
                     <van-col span="10">{{ rd.order.potential_customer.name }}---{{ rd.order.potential_customer.phone }}
                     </van-col>
-                    <van-col span="3">
+                    <van-col span="4">
                         <van-tag round>{{ rd.order.carType }}</van-tag>
                     </van-col>
-                    <van-col span="11">
+                    <van-col span="10">
                         <van-progress :percentage="state2num(rd.state)" stroke-width="8" color="#f2826a"
                             :pivot-text="act.get(rd.state)" :inactive="rd.state=='fail'"></van-progress>
                     </van-col>
                 </van-row>
                 <van-row gutter="20">
                     <van-col span="6">创建时间：</van-col>
-                    <van-col span="18">{{ (new Date(rd.tracks[0].update_time)).toLocaleString() }}
+                    <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}
                     </van-col>
                 </van-row>
                 <van-row gutter="20">
@@ -62,7 +62,7 @@
                 </van-row>
             </van-collapse-item>
         </van-collapse>
-       <!--  <van-button type="default" @click="download">下载excel文件</van-button> -->
+        <!--  <van-button type="default" @click="download">下载excel文件</van-button> -->
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
@@ -104,6 +104,13 @@
                 /* output format determined by filename */
                 // XLSX.writeFile(new_workbook, 'out.xlsx');
                 /* at this point, out.xlsb will have been downloaded */
+            }
+        },
+        computed: {
+            timeString() {
+                return this.referreds.map(item => {
+                    return new Date(item.tracks[0].update_time).toLocaleString();
+                });
             }
         }
     })

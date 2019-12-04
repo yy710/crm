@@ -6,6 +6,7 @@ const referred = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
 const config = require('../config.json');
 const XLSX = require('xlsx');
+const { getParamValue } = require('../common');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -36,10 +37,6 @@ module.exports = function (express) {
         handleMsg(),
         referred.accept(),
         referred.dispatchPre(),
-        (req, res, next) => {
-            console.log("dispatchPre() set req.query = ", req.query);
-            next();
-        },
         referred.dispatch());
 
     routerReferred.get('/download', function (req, res, next) {
@@ -104,10 +101,8 @@ module.exports = function (express) {
 
     routerReferred.use('/dispatch',
         (req, res, next) => {
-            //console.log("req.query: \n", req.query);
             req.query.operator = JSON.parse(req.query.operator);
             req.query.employer = JSON.parse(req.query.employer);
-            console.log("req.query: \n", req.query);
             next();
         },
         referred.dispatch());
@@ -115,7 +110,6 @@ module.exports = function (express) {
     routerReferred.use('/new',
         (req, res, next) => {
             req.query.operator = JSON.parse(req.query.operator);
-            console.log("req.query: \n", req.query);
             next();
         },
         referred.new(),
@@ -142,8 +136,6 @@ module.exports = function (express) {
     });
 
     routerReferred.use('/get-referreds', (req, res, next) => {
-        console.log("req.query", req.query);
-
         const admins = config.referred.adminId.split('|');
         //console.log("admins: ", admins)
 
@@ -169,7 +161,6 @@ module.exports = function (express) {
     });
 
     routerReferred.use('/commit', referred.commit(), (req, res, next) => {
-        console.log("commit req.query: ", req.query);
         res.json({ code: 0, msg: "提交成功！" });
     });
 
@@ -179,7 +170,7 @@ module.exports = function (express) {
         (req, res, next) => {
             req.data.url = decodeURIComponent(req.query.url);
             req.query.code = req.query.code || getParamValue(req.data.url, "code");
-            console.log("req.query.code: ", req.query.code);
+            //console.log("req.query.code: ", req.query.code);
             next();
         },
         getUser(),
@@ -200,18 +191,4 @@ module.exports = function (express) {
     );
 
     return router;
-}
-
-function getParamValue(url, key) {
-    const regex = new RegExp(key + "=([^&]*)", "i");
-    const ret = url.match(regex);
-    if (ret != null) return (ret[1]);
-    return null;
-}
-
-function log(str) {
-    return r => {
-        console.log(str, r);
-        return Promise.resolve(r);
-    };
 }

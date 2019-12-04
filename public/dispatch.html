@@ -87,7 +87,7 @@
                 .then(r => getReferred(referredid))
                 //.then(log("get referred: "))
                 .then(r => {
-                    if (r.state != "new") vant.Dialog.alert({ message: "顾问已接受指派的订单，\n不能重新指派！！！" }).then(wx.closeWindow);
+                    if (r.state != "new" && r.state != "dispatched") vant.Dialog.alert({ message: "顾问已接受指派的订单，\n不能重新指派！！！" }).then(wx.closeWindow);
                     else if (r.order.dispatch_employer.name != '') {
                         vant.Dialog.confirm({ title: "提示", message: "已指派过顾问！！！", confirmButtonText: "重新指派顾问", cancelButtonText: "返回" }).then(r => wx.ready(this.dispatchEmployer)).catch(wx.closeWindow);
                     }else{
