@@ -16,7 +16,7 @@ exports.init = function (msg = {}) {
     return this;
 };
 
-exports.addToUser = function(user){
+exports.addToUser = function (user) {
     this.msg.touser += `|${user}`;
     return this;
 };
@@ -68,5 +68,6 @@ exports.sendMarkdown = function (content = {}) {
 exports.sendMsg = function () {
     return axios
         .post(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${this.access_token}`, this.msg)
+        .then(() => this.msg)
         .catch(error => console.log(error));
 };

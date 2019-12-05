@@ -44,6 +44,30 @@ function log(text) {
     };
 }
 
+function isDispatched(col, rfid) {
+    return function () {
+        // return promise
+        if (!col || !rfid) return Promise.catch("isDispatched() error!");
+        return col.findOne({ id: rfid })
+            .then(r => r.order.dispatch_employer)
+            .catch(err => console.log(err));
+    }
+}
+
+function pushMsg(col, rfid) {
+    return function (msg) {
+        return col.updateOne(
+            { id: rfid },
+            { $addToSet: { sendMsgs: { msgtype: msg.msgtype, touser: msg.touser, task_id: msg.taskcard.task_id } } },
+            { upsert: false })
+            .catch(console.log);
+    };
+}
+
+function createId(pefix = ''){
+    return pefix + randomString(3) + new Date().getTime();
+}
+
 class TaskQuery {
     constructor() {
         this.tasks = [];
@@ -71,9 +95,9 @@ class TaskQuery {
      * delay seconds
      * @param {int} s 
      */
-    exec(s = 0, c = true) {
+    exec(s = 0) {
         const next = async () => {
-            if (this.tasks.length === 0 || c === false) return;
+            if (this.tasks.length === 0) return;
             const task = this.tasks.shift();
             if (s) await this._delay(s);
             task(this.ctx, next);
@@ -93,4 +117,4 @@ class TaskQuery {
     }
 }
 
-module.exports = { act, TaskQuery, log, randomString, mergeOptions, getArray0, getParamValue };
+module.exports = { act, TaskQuery, log, randomString, mergeOptions, getArray0, getParamValue, isDispatched, pushMsg, createId };

@@ -31,7 +31,7 @@
         <van-collapse v-model="activeNames" accordion>
             <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
                 <van-row slot="title" style="display: flex; align-items: baseline;">
-                    <van-col span="10">{{ rd.order.potential_customer.name }}---{{ rd.order.potential_customer.phone }}
+                    <van-col span="10">{{ rd.order.potential_customer.name }}-{{ rd.order.potential_customer.phone }}
                     </van-col>
                     <van-col span="4">
                         <van-tag round>{{ rd.order.carType }}</van-tag>

@@ -14,7 +14,7 @@ const data = {
     // 订单当前状态
     state: "new",
     // task
-    sendMsgs: [{action, touser, task_id, data}],
+    sendMsgs: [{ action, touser, task_id }],
     // 订单跟踪记录
     tracks: [
         {

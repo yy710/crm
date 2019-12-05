@@ -2,7 +2,7 @@ const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
 const sentMsg = require('./sent-msg');
-const { log, randomString } = require('./common');
+const { log, randomString, isDispatched, pushMsg, createId } = require('./common');
 const sendQuery = require('./send_msg_to_users');
 
 const act = new Map([
@@ -36,7 +36,7 @@ module.exports = {
              */
             const referred = {
                 // 订单识别ID， 16个字符随机字符串
-                id: randomString(16),
+                id: createId('rf'),//randomString(16),
                 // 订单基础信息，通常不需要更改
                 order: {
                     potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
@@ -58,17 +58,19 @@ module.exports = {
                     data: req.query
                 }]
             };
+
             const textcard = {
                 "title": "有新转介绍信息",
                 "description": createDesc1(referred),
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
                 "btntxt": "指派顾问"
             };
+
             const taskcard = {
                 "title": "有新转介绍信息",
                 "description": createDesc1(referred),
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
-                "task_id": 'new' + referred.id,
+                "task_id": createId('new'),
                 "btn": [
                     {
                         "key": "new",
@@ -79,22 +81,24 @@ module.exports = {
                     }
                 ]
             };
+
             const col = req.data.db.collection('referreds');
-            await sentMsg.init({ touser: 'YuChunJian' }).sentTaskcard(taskcard);
-            referred.sendMsgs.push({ msgtype: sentMsg.msg.msgtype, touser: sentMsg.msg.touser, task_id: taskcard.task_id });
-            await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+            // flow A
+            async function flowA() {
+                await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+                //间隔60秒检查是否指派，未指派则发送消息给下一位管理员
+                sendQuery(['YuChunJian', 'YuChunJian'], taskcard, isDispatched(col, referred.id), pushMsg(col, referred.id)).exec(60);
+            }
+            // flow B
+            async function flowB() {
+                await sentMsg.init().sentTaskcard(taskcard)//.then(pushMsg(col, referred.id));
+                referred.sendMsgs.push({ msgtype: sentMsg.msg.msgtype, touser: sentMsg.msg.touser, task_id: taskcard.task_id });
+                await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+            }
+
+            await flowA();
             req.data.referred = referred;
             next();
-
-            /*  // write new referred to db and send textcard to dispatcher
-             col.replaceOne({ "order.potential_customer.phone": req.data.referred.order.potential_customer.phone }, req.data.referred, { upsert: 1 })
-                 //.then(r => sendQuery(['YuChunJian', 'YuChunJian'], taskcard).exec(60))
-                 .then(r => sentMsg.init().sentTaskcard(taskcard))
-                 // write tracks for taskcard
-                 .then(r => req.data.referred.sendMsgs.push(sentMsg.msg))//({ msgtype: "taskcard", touser: sentMsg.touser, task_id: taskcard.task_id, data: taskcard }))
-                 // to next middleware
-                 .then(r => next())
-                 .catch(err => console.log(err)); */
         };
     },
     dispatch() {
@@ -131,7 +135,7 @@ module.exports = {
                             ]
                         };
                         // send taskcard to empoyer 
-                        return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard);
+                        return sentMsg.init({ touser: req.query.employer.id }).sentTaskcard(taskcard).then(pushMsg(col, req.query.referredid)).then(() => r);
                     })
                     // 更新任务卡片消息状态
                     .then(r => axios.post(`https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`, {

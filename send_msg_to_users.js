@@ -1,17 +1,21 @@
 const { TaskQuery } = require('./common');
 const sentMsg = require('./sent-msg');
+const assert = require('assert');
 
-module.exports = function (users = [], taskcard) {
+module.exports = function (users = [], taskcard, check, pushMsg) {
     const taskQuery = new TaskQuery();
     users = typeof users == 'string' ? users.split('|') : users;
     users.forEach(user => {
         taskQuery.use((ctx, next) => {
-            // send massage to user
-            sentMsg
-                .init({ touser: user })
+            // check dispatched?
+            check().then(r => {
+                // send massage to user
+                if (r.name) sentMsg.init({ touser: user })
                 .sentTaskcard(taskcard)
-                .then(r => next())
-                .catch(err => console.log(err));
+                .then(pushMsg)
+                .then(next)
+                .catch(console.log);
+            });
         });
     });
     return taskQuery;
