@@ -21,22 +21,21 @@ module.exports = {
             next();
         };
     },
+    // create new referred data
     new() {
         return async (req, res, next) => {
-            // create new referred data
-            /**
-             * req.query
-             *      customerName: 客户姓名,
-                    customerPhone: 客户电话,
-                    carType: 意向车型,
-                    fromName: 介绍人姓名,
-                    fromPhone: 介绍人电话,
-                    preEmployerName: 建议指派顾问姓名,
-                    operator: { id, name, mobile} 创建人信息
+            /** req.query: { 
+             * customerName: 客户姓名, 
+             * customerPhone: 客户电话, 
+             * carType: 意向车型, 
+             * fromName: 介绍人姓名, 
+             * fromPhone: 介绍人电话, 
+             * preEmployerName: 建议指派顾问姓名, 
+             * operator: { id, name, mobile} 创建人信息 }
              */
             const referred = {
                 // 订单识别ID， 16个字符随机字符串
-                id: createId('rf'),//randomString(16),
+                id: createId(),//randomString(16),
                 // 订单基础信息，通常不需要更改
                 order: {
                     potential_customer: { id: 0, name: req.query.customerName, phone: req.query.customerPhone },
@@ -70,7 +69,7 @@ module.exports = {
                 "title": "有新转介绍信息",
                 "description": createDesc1(referred),
                 "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
-                "task_id": createId('new'),
+                //"task_id": createId(),
                 "btn": [
                     {
                         "key": "new",
@@ -78,25 +77,43 @@ module.exports = {
                         "replace_name": "已指派顾问",
                         "color": "red",
                         "is_bold": true
+                    },
+                    {
+                        "key": "delete",
+                        "name": "删除此信息",
+                        "replace_name": "信息已删除"
                     }
                 ]
             };
 
             const col = req.data.db.collection('referreds');
-            // flow A
-            async function flowA() {
+            const _pushMsg = pushMsg(col, referred.id);
+            // flow A 
+            async function queryFlow() {
                 await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
                 //间隔60秒检查是否指派，未指派则发送消息给下一位管理员
-                sendQuery(['YuChunJian', 'YuChunJian'], taskcard, isDispatched(col, referred.id), pushMsg(col, referred.id)).exec(60);
+                return sendQuery(['YuChunJian', 'YuChunJian'], taskcard, isDispatched(col, referred.id), _pushMsg).exec(60);
+            }
+            async function queryFlow2() {
+                await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+                const result = await sentMsg.init({ touser: "YuChunJian" }).sentTaskcard(taskcard)//.then(pushMsg(col, referred.id));
+                console.log("sentMsg: ", result);
+                await _pushMsg(result);
             }
             // flow B
-            async function flowB() {
-                await sentMsg.init().sentTaskcard(taskcard)//.then(pushMsg(col, referred.id));
-                referred.sendMsgs.push({ msgtype: sentMsg.msg.msgtype, touser: sentMsg.msg.touser, task_id: taskcard.task_id });
+            async function raceFlow() {
+                const result = await sentMsg.init().sentTaskcard(taskcard)//.then(pushMsg(col, referred.id));
+                console.log("sentMsg: ", result);
+                referred.sendMsgs.push({
+                    title: sentMsg.msg.title,
+                    msgtype: sentMsg.msg.msgtype,
+                    touser: sentMsg.msg.touser,
+                    task_id: taskcard.task_id
+                });
                 await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
             }
 
-            await flowA();
+            await queryFlow2();
             req.data.referred = referred;
             next();
         };

@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const http = require('http');
 const xmlparser = require('express-xml-bodyparser');
+const axios = require('axios');
 //const https = require('https');
 //const fs = require('fs');
 const cors = require('cors');
@@ -14,6 +15,25 @@ const MongoClient = require('mongodb').MongoClient;
 const config = require('./config.json');
 global.config = config;
 
+MongoClient.connect(config.crmDbUrl, { useUnifiedTopology: true }, function (err, client) {
+    assert.equal(null, err);
+    console.log("Connected successfully to mongodb server");
+    global.crmdb = client.db();
+    //client.close();
+});
+
+const EventEmitter = require('events');
+class LogEmitter extends EventEmitter { }
+global.logEmitter = new LogEmitter();
+
+
+const schedule = require('node-schedule');
+const j = schedule.scheduleJob('*/5 * * * *', function () {
+    console.log('The answer to life, the universe, and everything!');
+    if (!global.crmdb) return;
+    axios.get('http://localhost/yz/referred/cron?a=1')
+        .then(r => console.log("get cron: ", JSON.stringify(r.data, null, 4)));
+});
 // 载入自定义模块
 
 // 创建 http 服务

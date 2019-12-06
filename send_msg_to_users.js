@@ -10,11 +10,12 @@ module.exports = function (users = [], taskcard, check, pushMsg) {
             // check dispatched?
             check().then(r => {
                 // send massage to user
-                if (r.name) sentMsg.init({ touser: user })
-                .sentTaskcard(taskcard)
-                .then(pushMsg)
-                .then(next)
-                .catch(console.log);
+                if (r.name) sentMsg
+                    .init({ touser: user })
+                    .sentTaskcard(taskcard)
+                    .then(pushMsg)
+                    .then(next)
+                    .catch(console.log);
             });
         });
     });

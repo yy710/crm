@@ -1,7 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
-const { mergeOptions } = require('./common');
+const { mergeOptions, createId } = require('./common');
 
 exports.init = function (msg = {}) {
     assert.notEqual(null, global.token.access_token);
@@ -38,7 +38,7 @@ exports.sentTaskcard = function (taskcard = {}) {
         "title": "赵明登的礼物申请",
         "description": "礼品：A31茶具套装<br>用途：赠与小黑科技张总经理",
         "url": "http://www.all2key.cn",
-        "task_id": "taskid123",
+        "task_id": createId(),
         "btn": [
             {
                 "key": "key111",

@@ -54,18 +54,27 @@ function isDispatched(col, rfid) {
     }
 }
 
+function sampleMsg(sendMsg) {
+    return {
+        title: sendMsg.title,
+        msgtype: sendMsg.msgtype,
+        touser: sendMsg.touser,
+        task_id: sendMsg.taskcard.task_id
+    };
+}
+
 function pushMsg(col, rfid) {
-    return function (msg) {
+    return function (msg, cb = null) {
         return col.updateOne(
             { id: rfid },
-            { $addToSet: { sendMsgs: { msgtype: msg.msgtype, touser: msg.touser, task_id: msg.taskcard.task_id } } },
+            { $addToSet: { sendMsgs: typeof cb == "function" ? cb(msg) : msg } },
             { upsert: false })
             .catch(console.log);
     };
 }
 
-function createId(pefix = ''){
-    return pefix + randomString(3) + new Date().getTime();
+function createId(pefix = '', ra = null) {
+    return pefix + typeof ra == "function" ? ra() : '' + new Date().getTime();
 }
 
 class TaskQuery {

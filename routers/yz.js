@@ -190,5 +190,7 @@ module.exports = function (express) {
         }
     );
 
+    routerReferred.use('/cron', require('./cron.js'));
+
     return router;
 }
