@@ -73,16 +73,21 @@ function pushMsg(col, rfid) {
     };
 }
 
-function createId(pefix = '', ra = null) {
+function createId(pefix = '', ra = randomString(3)) {
     return pefix + typeof ra == "function" ? ra() : '' + new Date().getTime();
 }
 
+// my mini middleware, use exec() to start
 class TaskQuery {
     constructor() {
         this.tasks = [];
         this.ctx = {};
     }
 
+    /**
+     * 
+     * @param {number} s 
+     */
     _delay(s) {
         return new Promise(function (resolve, reject) {
             setTimeout(() => {
@@ -124,6 +129,24 @@ class TaskQuery {
         }
         next();
     }
+
+    *yieldExec() {
+        if (this.tasks.length === 0) return;
+        const task = this.tasks.shift();
+        yield task(this.ctx);
+    }
 }
 
-module.exports = { act, TaskQuery, log, randomString, mergeOptions, getArray0, getParamValue, isDispatched, pushMsg, createId };
+module.exports = {
+    act,
+    TaskQuery,
+    log,
+    randomString,
+    mergeOptions,
+    getArray0,
+    getParamValue,
+    isDispatched,
+    pushMsg,
+    createId,
+    reqQuery2referred
+};

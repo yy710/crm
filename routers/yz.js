@@ -105,17 +105,9 @@ module.exports = function (express) {
             req.query.employer = JSON.parse(req.query.employer);
             next();
         },
-        referred.dispatch());
+        referred.midlleware.dispatch());
 
-    routerReferred.use('/new',
-        (req, res, next) => {
-            req.query.operator = JSON.parse(req.query.operator);
-            next();
-        },
-        referred.new(),
-        (req, res, next) => {
-            res.json({ err: 0, msg: "新信息创建成功！" });
-        });
+    routerReferred.use('/new', referred.midlleware.new());
 
     routerReferred.use('/getToken',
         routerAccessToken,
@@ -160,7 +152,7 @@ module.exports = function (express) {
             .catch(err => console.log(err));
     });
 
-    routerReferred.use('/commit', referred.commit(), (req, res, next) => {
+    routerReferred.use('/commit', referred.midlleware.commit(), (req, res, next) => {
         res.json({ code: 0, msg: "提交成功！" });
     });
 
