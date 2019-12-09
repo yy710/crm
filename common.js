@@ -73,8 +73,8 @@ function pushMsg(col, rfid) {
     };
 }
 
-function createId(pefix = '', ra = randomString(3)) {
-    return pefix + typeof ra == "function" ? ra() : '' + new Date().getTime();
+function createId(pefix = '', r = 8, d = true, suffix = '') {
+    return pefix + randomString(r) + d ? new Date().getTime() : '' + suffix;
 }
 
 // my mini middleware, use exec() to start

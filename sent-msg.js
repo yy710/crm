@@ -1,7 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
-const { mergeOptions, createId } = require('./common');
+const { mergeOptions, randomString } = require('./common');
 
 exports.init = function (msg = {}) {
     assert.notEqual(null, global.token.access_token);
@@ -33,12 +33,19 @@ exports.sentTextcard = function (textcard = {}) {
     return this.sendMsg();
 };
 
+exports.sentText = function (text = {}) {
+    const _text = { "content": "你的快递已到，请携带工卡前往邮件中心领取。\n出发前可查看<a href=\"http://work.weixin.qq.com\">邮件中心视频实况</a>，聪明避开排队。" };
+    this.msg.msgtype = "text";
+    this.msg.text = mergeOptions(text, this.msg.text);
+    return this.sendMsg();
+};
+
 exports.sentTaskcard = function (taskcard = {}) {
     const _taskcard = {
         "title": "赵明登的礼物申请",
         "description": "礼品：A31茶具套装<br>用途：赠与小黑科技张总经理",
         "url": "http://www.all2key.cn",
-        "task_id": createId(),
+        "task_id": randomString(8) + new Date().getTime(),
         "btn": [
             {
                 "key": "key111",
@@ -55,7 +62,9 @@ exports.sentTaskcard = function (taskcard = {}) {
         ]
     };
     this.msg.msgtype = "taskcard";
-    this.msg.taskcard = mergeOptions(taskcard, _taskcard);
+    this.msg.taskcard = mergeOptions(taskcard, this.msg.taskcard);
+    // sure a new task+id
+    this.msg.taskcard.task_id = randomString(8) + msg.taskcard.task_id.substr(8);
     return this.sendMsg();
 };
 
