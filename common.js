@@ -147,6 +147,5 @@ module.exports = {
     getParamValue,
     isDispatched,
     pushMsg,
-    createId,
-    reqQuery2referred
+    createId
 };

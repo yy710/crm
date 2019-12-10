@@ -5,77 +5,79 @@ const sentMsg = require('./sent-msg');
 const { log, randomString, act } = require('./common');
 const sendQuery = require('./send_msg_to_users');
 
-const referred = {};
-// return users array
-referred.getAdmins = function (users) {
-    return typeof users == 'string' ? users.split('|') : users;
-};
+const referred = {
+    // return users array
+    getAdmins(users) {
+        return typeof users == 'string' ? users.split('|') : users;
+    },
 
-referred.pushMsg = function (col, rfid) {
-    return function (msg, cb = null) {
-        return col.updateOne(
-            { id: rfid },
-            { $addToSet: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
-            { upsert: false })
-            .catch(console.log);
-    };
-};
+    pushMsg(col, rfid) {
+        return function (msg, cb = null) {
+            return col.updateOne(
+                { id: rfid },
+                { $addToSet: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
+                { upsert: false })
+                .catch(console.log);
+        };
+    },
 
-referred.getEmployer = function (col, rfid) {
-    return function () {
-        // return promise
-        return col.findOne({ id: rfid })
-            .then(r => r.order.dispatch_employer)
-            .catch(err => console.log(err));
+    getEmployer(col, rfid) {
+        return function () {
+            // return promise
+            return col.findOne({ id: rfid })
+                .then(r => r.order.dispatch_employer)
+                .catch(err => console.log(err));
+        }
+    },
+
+    req2referred(rq) {
+        /** rq: { 
+        * customerName: 客户姓名, 
+        * customerPhone: 客户电话, 
+        * carType: 意向车型, 
+        * fromName: 介绍人姓名, 
+        * fromPhone: 介绍人电话, 
+        * preEmployerName: 建议指派顾问姓名, 
+        * operator: { id, name, mobile} 创建人信息 }
+        */
+        return {
+            // 订单识别ID
+            id: new Date().getTime(),
+            // 订单基础信息，通常不需要更改
+            order: {
+                potential_customer: { id: 0, name: rq.customerName, phone: rq.customerPhone },
+                dispatch_employer: { id: 0, name: '', phone: '' },
+                from_customer: { id: 0, name: rq.fromName, phone: rq.fromPhone },
+                creater: rq.operator,
+                carType: rq.carType,
+                source_type: '转介绍'
+            },
+            // 订单当前状态
+            state: "new",
+            // 发送消息记录
+            sendMsgs: [],
+            // 订单跟踪记录
+            tracks: [{
+                action: "new",
+                update_time: new Date(),
+                operator: rq.operator,
+                data: rq
+            }]
+        };
     }
 };
 
-referred.req2referred = function (rq) {
-    /** rq: { 
-    * customerName: 客户姓名, 
-    * customerPhone: 客户电话, 
-    * carType: 意向车型, 
-    * fromName: 介绍人姓名, 
-    * fromPhone: 介绍人电话, 
-    * preEmployerName: 建议指派顾问姓名, 
-    * operator: { id, name, mobile} 创建人信息 }
-    */
-    return {
-        // 订单识别ID
-        id: new Date().getTime(),
-        // 订单基础信息，通常不需要更改
-        order: {
-            potential_customer: { id: 0, name: rq.customerName, phone: rq.customerPhone },
-            dispatch_employer: { id: 0, name: '', phone: '' },
-            from_customer: { id: 0, name: rq.fromName, phone: rq.fromPhone },
-            creater: rq.operator,
-            carType: rq.carType,
-            source_type: '转介绍'
-        },
-        // 订单当前状态
-        state: "new",
-        // 发送消息记录
-        sendMsgs: [],
-        // 订单跟踪记录
-        tracks: [{
-            action: "new",
-            update_time: new Date(),
-            operator: rq.operator,
-            data: rq
-        }]
-    };
-};
 
-referred.midlleware = {
+const middleware = {
     new() {
         return async (req, res, next) => {
             req.query.operator = JSON.parse(req.query.operator);
-            const referred = this.req2referred(req.query);
+            const rf = referred.req2referred(req.query);
             const taskcard = {
                 "title": "有新转介绍信息",
-                "description": createDesc(referred),
-                "url": `http://www.all2key.cn/dispatch.html?referredid=${referred.id}`,
-                "task_id": randomString(8) + referred.id,
+                "description": createDesc(rf),
+                "url": `http://www.all2key.cn/dispatch.html?referredid=${rf.id}`,
+                "task_id": randomString(8) + rf.id,
                 "btn": [{
                     "key": "new",
                     "name": "指派建议顾问",
@@ -86,11 +88,11 @@ referred.midlleware = {
             };
 
             const col = req.data.db.collection('referreds');
-            const pushMsg = this.pushMsg(col, referred.id);
+            const pushMsg = referred.pushMsg(col, rf.id);
             //const _isDispatched = isDispatched(col, referred.id);
 
             //write referred to db
-            await col.replaceOne({ "order.potential_customer.phone": referred.order.potential_customer.phone }, referred, { upsert: 1 });
+            await col.replaceOne({ "order.potential_customer.phone": rf.order.potential_customer.phone }, referred, { upsert: 1 });
             //间隔60秒检查是否指派，未指派则发送消息给下一位管理员。问题：灵活度不够，例如多次循环发送，每天检查发送等。
             //sendQuery(['YuChunJian', 'YuChunJian'], taskcard, _isDispatched, _pushMsg).exec(60);
             //单次发送
@@ -108,7 +110,7 @@ referred.midlleware = {
             }
             else {
                 const col = req.data.db.collection('referreds');
-                const pushMsg = this.pushMsg(col, referred.id);
+                const pushMsg = referred.pushMsg(col, req.query.referredid);
                 // get admin info from adminId
                 // write action "dispatch" to object of referred
                 await col.updateOne(
@@ -124,12 +126,12 @@ referred.midlleware = {
                     { upsert: false }
                 );
                 // get referred from referredid
-                const referred = await col.findOne({ id: req.query.referredid });
+                const rf = await col.findOne({ id: req.query.referredid });
                 const taskcard = {
                     "title": "收到指派的转介绍任务",
-                    "description": createDesc(referred),
-                    "url": `http://www.all2key.cn/show-task.html?referredid=${referred.id}&employerid=${referred.order.dispatch_employer.id}`,
-                    "task_id": randomString(8) + referred.id,
+                    "description": createDesc(rf),
+                    "url": `http://www.all2key.cn/show-task.html?referredid=${rf.id}&employerid=${rf.order.dispatch_employer.id}`,
+                    "task_id": randomString(8) + rf.id,
                     "btn": [{
                         "key": "accept",
                         "name": "接受任务",
@@ -138,9 +140,9 @@ referred.midlleware = {
                         "is_bold": true
                     }]
                 };
-                await sentMsg.init({ touser: referred.order.dispatch_employer.id }).sentTaskcard(taskcard).then(pushMsg);
+                await sentMsg.init({ touser: rf.order.dispatch_employer.id }).sentTaskcard(taskcard).then(pushMsg);
                 // 更新任务卡片消息状态
-                referred.sendMsgs.forEach(msg => {
+                rf.sendMsgs.forEach(msg => {
                     if (msg.data.title == '有新转介绍信息')
                         axios.post(
                             `https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`,
@@ -178,7 +180,7 @@ referred.midlleware = {
             if (post.EventKey == 'accept' && post.Event == 'taskcard_click') {
                 const col = req.data.db.collection('referreds');
                 const rfid = post.TaskId.substr(8);
-                const pushMsg = this.pushMsg(col, rfid);
+                const pushMsg = referred.pushMsg(col, rfid);
                 console.log("handle accept!");
                 col.updateOne(
                     { id: rfid },
@@ -192,38 +194,30 @@ referred.midlleware = {
             }
         };
     },
-    dispatchPre() {
-        return (req, res, next) => {
+    dispatchPre(that = this) {
+        return async (req, res, next) => {
             const post = req.data.post;
             if (post.EventKey == 'new' && post.Event == 'taskcard_click') {
                 const rfid = post.TaskId.substr(8);
-                // get user list
-                axios.get(`https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=${global.token.access_token}&department_id=22&fetch_child=0`)
-                    // r.data: { "errcode": 0, "errmsg": "ok", "userlist": [{"userid": "zhangsan", "name": "李四", "department": [1, 2]}]}
-                    .then(r => {
-                        assert.equal(0, r.data.errcode);
-                        const col = req.data.db.collection('referreds');
-                        return col.findOne({ id: rfid }).then(doc => {
-                            // find user in corp
-                            return r.data.userlist.find(element => {
-                                return element.name == doc.tracks[0].data.preEmployerName;
-                            });
-                        });
-                    })
-                    .then(log("userlist.find(): "))
-                    .then(r => {
-                        // set req.query to dispatch middleware
-                        req.query = {
-                            employer: { id: r.userid, name: r.name, department: r.department },
-                            operator: { id: post.FromUserName },
-                            referredid: rfid,
-                            source: "转介绍",
-                            nores: true
-                        };
-                        next();
-                    })
-                    .catch(err => console.log(err));
-                // dispatch
+                // get sales list
+                const userlist = (await axios.get(`https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=${global.token.access_token}&department_id=22&fetch_child=0`)).data.userlist;
+                // r.data: { "errcode": 0, "errmsg": "ok", "userlist": [{"userid": "zhangsan", "name": "李四", "department": [1, 2]}]}
+                const col = req.data.db.collection('referreds');
+                // find user in corp
+                const referred = await col.findOne({ id: rfid });
+                const user = userlist.find(user => {
+                    return user.name == referred.tracks[0].data.preEmployerName;
+                });
+                log("userlist.find(): ", user);
+                // set req.query to dispatch middleware
+                req.query = {
+                    employer: { id: user.userid, name: user.name, department: user.department },
+                    operator: { id: post.FromUserName },
+                    referredid: rfid,
+                    source: "转介绍",
+                    nores: true
+                };
+                next();
             } else {
                 next();
             }
@@ -239,6 +233,7 @@ referred.midlleware = {
              * referredid: 'tJpO4tfReysQy7JU' }
              */
             const col = req.data.db.collection('referreds');
+            const pushMsg = referred.pushMsg(col, req.query.referredid);
             col.updateOne(
                 { id: req.query.referredid },
                 { $addToSet: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
@@ -259,7 +254,7 @@ referred.midlleware = {
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
                     // send msg to admin and creater
                     const admin = r.tracks.find(t => t.action == 'dispatch').data.operator.id;
-                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').sendMarkdown(content);
+                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').sendMarkdown(content).then(pushMsg);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
@@ -267,7 +262,7 @@ referred.midlleware = {
     }
 }
 
-module.exports = referred;
+module.exports = { referred, middleware };
 
 // define textcard for dispatcher
 function createDesc(ref) {

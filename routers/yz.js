@@ -2,7 +2,7 @@ const accessToken = require('../access_token');
 const jsapiTicket = require('../jsapi_ticket');
 const getUser = require('../get-user');
 const sign = require('../sign');
-const referred = require('../referred');
+const { referred, midlleware } = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
 const config = require('../config.json');
 const XLSX = require('xlsx');
@@ -35,9 +35,9 @@ module.exports = function (express) {
 
     routerReferred.post('/msg',
         handleMsg(),
-        referred.accept(),
-        referred.dispatchPre(),
-        referred.dispatch());
+        midlleware.accept(),
+        midlleware.dispatchPre(),
+        midlleware.dispatch());
 
     routerReferred.get('/download', function (req, res, next) {
         const col = req.data.db.collection('referreds');
@@ -105,9 +105,9 @@ module.exports = function (express) {
             req.query.employer = JSON.parse(req.query.employer);
             next();
         },
-        referred.midlleware.dispatch());
+        midlleware.dispatch());
 
-    routerReferred.use('/new', referred.midlleware.new());
+    routerReferred.use('/new', midlleware.new());
 
     routerReferred.use('/getToken',
         routerAccessToken,
@@ -152,7 +152,7 @@ module.exports = function (express) {
             .catch(err => console.log(err));
     });
 
-    routerReferred.use('/commit', referred.midlleware.commit(), (req, res, next) => {
+    routerReferred.use('/commit', midlleware.commit(), (req, res, next) => {
         res.json({ code: 0, msg: "提交成功！" });
     });
 

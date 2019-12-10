@@ -2,7 +2,7 @@ const express = require('express');
 const routerCron = express.Router();
 const { createId, isDispatched } = require('../common');
 const referred = require('../referred');
-const sentMsg = require('./sent-msg');
+const sentMsg = require('../sent-msg');
 
 routerCron.get('/',
     async (req, res, next) => {
