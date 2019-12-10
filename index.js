@@ -28,7 +28,7 @@ global.logEmitter = new LogEmitter();
 
 
 const schedule = require('node-schedule');
-const j = schedule.scheduleJob('*/5 * * * *', function () {
+const j = schedule.scheduleJob('*/1 * * * *', function () {
     console.log('The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
     axios.get('http://localhost/yz/referred/cron?a=1')

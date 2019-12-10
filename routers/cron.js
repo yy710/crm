@@ -1,7 +1,7 @@
 const express = require('express');
 const routerCron = express.Router();
 const { createId, isDispatched } = require('../common');
-const referred = require('../referred');
+const { referred } = require('../referred');
 const sentMsg = require('../sent-msg');
 
 routerCron.get('/',
@@ -9,21 +9,24 @@ routerCron.get('/',
         res.json({ msg: "ok!" });
         const col = req.data.db.collection('referreds');
         // find the order no dispatch employer
-        const referreds = await col.find({}).toArray();
-        if (!Array.isArray(referreds)) return 0;
+        const rfs = await col.find({}).toArray();
+        if (!Array.isArray(rfs)) return 0;
 
-        referreds.forEach(rf => {
+        rfs.forEach(rf => {
+            //if(!rf.sendMsgs)return 0;
+            //console.log("sendMsgs", rf.sendMsgs);
             const msg = rf.sendMsgs.pop();
-            const pushMsg = referreds.pushMsg(col, rf.id);
+            const pushMsg = referred.pushMsg(col, rf.id);
             switch (rf.state) {
                 case 'new':
-                    if (new Date() - msg.update_time > 5 * 60 * 1000) {
+                    if (new Date() - msg.update_time > 1 * 60 * 1000) {
                         const users = referred.getAdmins(global.config.referred.adminId);
                         const user = msg.data.touser;
                         const i = users.lastIndexOf(user);
+                        console.log("dsgsgsgsgsgs");
                         if (i < users.length - 1) {
                             console.log("sendsend!");
-                            //sendMsg.init(msg.data).init({ touser: users[i + 1] }).sendTaskCard();
+                            sendMsg.init(msg.data).init({ touser: users[i + 1] }).sendTaskCard().then(pushMsg).catch(console.log);
                         }
                     }
                     break;

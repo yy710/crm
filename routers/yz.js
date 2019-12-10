@@ -2,11 +2,11 @@ const accessToken = require('../access_token');
 const jsapiTicket = require('../jsapi_ticket');
 const getUser = require('../get-user');
 const sign = require('../sign');
-const { referred, midlleware } = require('../referred');
+const { referred, mw } = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
 const config = require('../config.json');
 const XLSX = require('xlsx');
-const { getParamValue } = require('../common');
+const { getParamValue, act } = require('../common');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -35,38 +35,35 @@ module.exports = function (express) {
 
     routerReferred.post('/msg',
         handleMsg(),
-        midlleware.accept(),
-        midlleware.dispatchPre(),
-        midlleware.dispatch());
+        mw.accept(),
+        mw.dispatchPre(),
+        mw.dispatch());
 
     routerReferred.get('/download', function (req, res, next) {
         const col = req.data.db.collection('referreds');
+        const getValue = (input, defaultVaule) => {
+            try {
+                return input;
+            } catch (error) {
+                return defaultVaule;
+            }
+        };
         col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).toArray().then(r => {
-            const act = new Map([
-                ["new", " 新建信息"],
-                ["dispatch", "指派顾问"],
-                ["dispatched", "指派顾问"],
-                ["accept", "接受指派"],
-                ["accepted", "接受指派"],
-                ["proceed", "洽谈中"],
-                ["success", "已成交"],
-                ["ordered", "已订车"],
-                ["fail", "战败"]
-            ]);
-            const _r = r.map(item => {
+            const _r = r.map(rf => {
+                console.log(rf);
                 return {
-                    "订单号": item.id,
-                    "订单状态": act.get(item.state),
-                    "客户姓名": item.order.potential_customer.name,
-                    "客户电话": item.order.potential_customer.phone || item.order.potential_customer.mobile,
-                    "介绍人姓名": item.order.from_customer.name,
-                    "介绍人电话": item.order.from_customer.phone || item.order.from_customer.mobile,
-                    "创建人姓名": item.tracks[0].data.operator.name,
-                    "创建人电话": item.tracks[0].data.operator.phone || item.tracks[0].data.operator.mobile,
-                    "订单创建时间": item.tracks[0].update_time.toLocaleString(),
-                    "指派顾问": item.order.dispatch_employer.name,
-                    "意向车型": item.order.carType,
-                    "来源类型": item.order.source_type
+                    "订单号": rf.id,
+                    "订单状态": act.get(rf.state),
+                    "客户姓名": rf.order.potential_customer.name,
+                    "客户电话": rf.order.potential_customer.phone,
+                    "介绍人姓名": rf.order.from_customer.name,
+                    "介绍人电话": rf.order.from_customer.phone,
+                    "创建人姓名": rf.tracks[0].data.operator.name,
+                    "创建人电话": rf.tracks[0].data.operator.mobile,
+                    "订单创建时间": rf.tracks[0].update_time.toLocaleString(),
+                    "指派顾问": rf.order.dispatch_employer.name,
+                    "意向车型": rf.order.carType || '',
+                    "来源类型": rf.order.source_type
                 };
             });
             //console.log(_r);
@@ -105,9 +102,9 @@ module.exports = function (express) {
             req.query.employer = JSON.parse(req.query.employer);
             next();
         },
-        midlleware.dispatch());
+        mw.dispatch());
 
-    routerReferred.use('/new', midlleware.new());
+    routerReferred.use('/new', mw.new());
 
     routerReferred.use('/getToken',
         routerAccessToken,
@@ -152,7 +149,7 @@ module.exports = function (express) {
             .catch(err => console.log(err));
     });
 
-    routerReferred.use('/commit', midlleware.commit(), (req, res, next) => {
+    routerReferred.use('/commit', mw.commit(), (req, res, next) => {
         res.json({ code: 0, msg: "提交成功！" });
     });
 

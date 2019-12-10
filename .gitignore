@@ -66,3 +66,4 @@ typings/
 .vscode/
 config.json
 temp/
+.DS_Store

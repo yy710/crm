@@ -64,7 +64,7 @@ exports.sentTaskcard = function (taskcard = {}) {
     this.msg.msgtype = "taskcard";
     this.msg.taskcard = mergeOptions(taskcard, this.msg.taskcard);
     // sure a new task+id
-    this.msg.taskcard.task_id = randomString(8) + msg.taskcard.task_id.substr(8);
+    this.msg.taskcard.task_id = randomString(8) + this.msg.taskcard.task_id.substr(8);
     return this.sendMsg();
 };
 
