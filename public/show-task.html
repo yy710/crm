@@ -50,13 +50,14 @@
         data: () => {
             return {
                 message: '',
-                state: 1
+                state: '已成交'
             }
         },
         beforeMount: function () {
             //getTicket().then(r => this.operator = r);
             getReferred(referredid).then(r => {
                 //console.log(r);
+                if(r.state == 'dispatched')vant.Dialog.alert({ message: "请先接受任务！！！" }).then(wx.closeWindow);
                 const track = r.tracks.pop();
                 this.state = track.data.state;
                 this.message = track.data.message;

@@ -5,6 +5,48 @@ const sentMsg = require('./sent-msg');
 const { log, randomString, act } = require('./common');
 const sendQuery = require('./send_msg_to_users');
 
+class Referred {
+
+}
+
+const _rf = {
+    async init(col, rfid) {
+        this.col = col;
+        this.rfid = rfid;
+        this.rf = await this._getRf();
+        return this;
+    },
+    // return users array
+    getAdmins(users) {
+        return typeof users == 'string' ? users.split('|') : users;
+    },
+
+    pushMsg(msg, cb = null) {
+        return this.col.updateOne(
+            { id: this.rfid },
+            { $addToSet: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
+            { upsert: false })
+            .catch(console.log);
+    },
+
+    getEmployer() {
+        return this.order.dispatch_employer;
+    },
+
+    getDispatch() {
+        return this.tracks.find(t => t.action == 'dispatch').operator;
+    },
+
+    _getRf() {
+        // return promise
+        return this.col.findOne({ id: this.rfid }).catch(err => console.log(err));
+    },
+
+    getRf() {
+        return this.rf;
+    }
+};
+
 const referred = {
     init(col, rfid) {
         this.col = col;
@@ -31,6 +73,22 @@ const referred = {
             return col.findOne({ id: rfid })
                 .then(r => r.order.dispatch_employer)
                 .catch(err => console.log(err));
+        }
+    },
+
+    getDispatch(col, rfid) {
+        return function () {
+            // return promise
+            return col.findOne({ id: rfid })
+                .then(r => r.tracks.find(t => t.action == 'dispatch').operator)
+                .catch(err => console.log(err));
+        }
+    },
+
+    getRf(col, rfid) {
+        return function () {
+            // return promise
+            return col.findOne({ id: rfid }).catch(err => console.log(err));
         }
     },
 
@@ -68,6 +126,26 @@ const referred = {
                 data: rq
             }]
         };
+    },
+
+    rf2taskcardOfNew(rf) {
+        return {
+            "title": "有新转介绍信息",
+            "description": createDesc(rf),
+            "url": `http://www.all2key.cn/dispatch.html?referredid=${rf.id}`,
+            "task_id": randomString(8) + rf.id,
+            "btn": [{
+                "key": "new",
+                "name": "指派建议顾问",
+                "replace_name": "已指派顾问",
+                "color": "red",
+                "is_bold": true
+            }]
+        };
+    },
+
+    sentTaskOfNew(rf) {
+
     }
 };
 
@@ -78,19 +156,7 @@ const mw = {
             try {
                 req.query.operator = JSON.parse(req.query.operator);
                 const rf = referred.req2referred(req.query);
-                const taskcard = {
-                    "title": "有新转介绍信息",
-                    "description": createDesc(rf),
-                    "url": `http://www.all2key.cn/dispatch.html?referredid=${rf.id}`,
-                    "task_id": randomString(8) + rf.id,
-                    "btn": [{
-                        "key": "new",
-                        "name": "指派建议顾问",
-                        "replace_name": "已指派顾问",
-                        "color": "red",
-                        "is_bold": true
-                    }]
-                };
+                const taskcard = referred.rf2taskcardOfNew(rf);
 
                 const col = req.data.db.collection('referreds');
                 const pushMsg = referred.pushMsg(col, rf.id);
@@ -195,7 +261,24 @@ const mw = {
                     { id: rfid },
                     { $addToSet: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
                     { upsert: false })
-                    .then(() => sentMsg.init({ touser: 'YuChunJian' }).sentText({ content: "销售顾问已接受订单！" }))
+                    .then(referred.getRf(col, rfid))
+                    .then(rf => {
+                        // 更新任务卡片消息状态
+                        rf.sendMsgs.forEach(msg => {
+                            if (msg.data.title == '收到指派的转介绍任务')
+                                axios.post(
+                                    `https://qyapi.weixin.qq.com/cgi-bin/message/update_taskcard?access_token=${global.token.access_token}`,
+                                    {
+                                        "userids": msg.data.touser,
+                                        "agentid": msg.data.agentid,
+                                        "task_id": msg.data.task_id,
+                                        "clicked_key": "accept"
+                                    }
+                                );
+                        });
+                        return rf;
+                    })
+                    .then(r => sentMsg.init({ touser: r.tracks.find(t => t.action == 'dispatch').operator.id }).sentText({ content: `销售顾问${r.order.dispatch_employer.name}已接受指派任务！` }))
                     .then(pushMsg)
                     .catch(err => console.log(err))
             } else {
@@ -214,21 +297,28 @@ const mw = {
                 // r.data: { "errcode": 0, "errmsg": "ok", "userlist": [{"userid": "zhangsan", "name": "李四", "department": [1, 2]}]}
                 const col = req.data.db.collection('referreds');
                 // find user in corp
-                const rf = await col.findOne({ id: rfid });
+                const referred = await _rf.init(col, rfid)
+                const rf = referred.getRf();
                 //console.log("pre", rf);
                 const user = userlist.find(user => {
                     return user.name == rf.tracks[0].data.preEmployerName;
                 });
                 log("userlist.find(): ", user);
-                // set req.query to dispatch middleware
-                req.query = {
-                    employer: { id: user.userid, name: user.name, department: user.department },
-                    operator: { id: post.FromUserName },
-                    referredid: rfid,
-                    source: "转介绍",
-                    nores: true
-                };
-                next();
+                if (user) {
+                    // set req.query to dispatch middleware
+                    req.query = {
+                        employer: { id: user.userid, name: user.name, department: user.department },
+                        operator: { id: post.FromUserName },
+                        referredid: rfid,
+                        source: "转介绍",
+                        nores: true
+                    };
+                    next();
+                } else {
+                    //send message to operator
+                    //console.log("pre dispatch not find!");
+                    sentMsg.init({ touser: post.FromUserName }).sentText({ content: "自动指派顾问失败！可能顾问名字不正确，请点击任务卡手动指派。" }).then(msg => referred.pushMsg(msg)).catch(console.log)
+                }
             } else {
                 next();
             }
@@ -264,7 +354,7 @@ const mw = {
                 ><font color="comment">状态更新说明：${req.query.message || ''}</font>
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
                     // send msg to admin and creater
-                    const admin = r.tracks.find(t => t.action == 'dispatch').data.operator.id;
+                    const admin = r.tracks.find(t => t.action == 'dispatch').operator.id;
                     return sentMsg.init({ touser: admin }).addToUser('YuChunJian').sendMarkdown(content).then(pushMsg);
                 })
                 .then(r => next())
@@ -273,7 +363,7 @@ const mw = {
     }
 }
 
-module.exports = { referred, mw };
+module.exports = { _rf, referred, mw };
 
 // define textcard for dispatcher
 function createDesc(ref) {

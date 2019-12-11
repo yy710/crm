@@ -12,7 +12,9 @@ exports.init = function (msg = {}) {
         "agentid": global.config.referred.agentid,
         "enable_id_trans": 1
     }
-    this.msg = mergeOptions(msg, _msg);
+    if (!this.msg) this.msg = _msg;
+    this.msg = mergeOptions(msg, this.msg);
+    //console.log("this.msg: ", this.msg);
     return this;
 };
 
@@ -41,26 +43,6 @@ exports.sentText = function (text = {}) {
 };
 
 exports.sentTaskcard = function (taskcard = {}) {
-    const _taskcard = {
-        "title": "赵明登的礼物申请",
-        "description": "礼品：A31茶具套装<br>用途：赠与小黑科技张总经理",
-        "url": "http://www.all2key.cn",
-        "task_id": randomString(8) + new Date().getTime(),
-        "btn": [
-            {
-                "key": "key111",
-                "name": "批准",
-                "replace_name": "已批准",
-                "color": "red",
-                "is_bold": true
-            },
-            {
-                "key": "key222",
-                "name": "驳回",
-                "replace_name": "已驳回"
-            }
-        ]
-    };
     this.msg.msgtype = "taskcard";
     this.msg.taskcard = mergeOptions(taskcard, this.msg.taskcard);
     // sure a new task+id

@@ -28,11 +28,17 @@ global.logEmitter = new LogEmitter();
 
 
 const schedule = require('node-schedule');
-const j = schedule.scheduleJob('*/1 * * * *', function () {
-    console.log('The answer to life, the universe, and everything!');
+const j1 = schedule.scheduleJob('*/5 * * * *', function () {
+    console.log('111111The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
-    axios.get('http://localhost/yz/referred/cron?a=1')
-        .then(r => console.log("get cron: ", JSON.stringify(r.data, null, 4)));
+    axios.get('http://localhost/yz/referred/cron/minute5')
+        .then(r => console.log("get cron1: ", JSON.stringify(r.data, null, 4)));
+});
+const j2 = schedule.scheduleJob({ hour: [9, 17], minute: 15 }, function () {
+    console.log('22222The answer to life, the universe, and everything!');
+    if (!global.crmdb) return;
+    axios.get('http://localhost/yz/referred/cron/everyday')
+        .then(r => console.log("get cron2: ", JSON.stringify(r.data, null, 4)));
 });
 // 载入自定义模块
 
