@@ -14,6 +14,7 @@ const MongoClient = require('mongodb').MongoClient;
 // 载入配置文件
 const config = require('./config.json');
 global.config = config;
+global.debug = false;
 
 MongoClient.connect(config.crmDbUrl, { useUnifiedTopology: true }, function (err, client) {
     assert.equal(null, err);
@@ -28,13 +29,13 @@ global.logEmitter = new LogEmitter();
 
 
 const schedule = require('node-schedule');
-const j1 = schedule.scheduleJob('*/5 * * * *', function () {
+const j1 = schedule.scheduleJob('*/5 9-17 * * *', function () {
     console.log('111111The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
     axios.get('http://localhost/yz/referred/cron/minute5')
         .then(r => console.log("get cron1: ", JSON.stringify(r.data, null, 4)));
 });
-const j2 = schedule.scheduleJob({ hour: [9, 17], minute: 15 }, function () {
+const j2 = schedule.scheduleJob({ hour: [9, 17], minute: 0 }, function () {
     console.log('22222The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
     axios.get('http://localhost/yz/referred/cron/everyday')

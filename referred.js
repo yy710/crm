@@ -355,7 +355,7 @@ const mw = {
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
                     // send msg to admin and creater
                     const admin = r.tracks.find(t => t.action == 'dispatch').operator.id;
-                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').sendMarkdown(content).then(pushMsg);
+                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser('r.order.creater.id').sendMarkdown(content).then(pushMsg);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
