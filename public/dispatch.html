@@ -74,6 +74,11 @@
                     mobile: '',
                     id: ''
                 },
+                operator2: {
+                    name: '',
+                    mobile: '',
+                    id: ''
+                },
                 customer: '',
                 from: '',
                 source: '转介绍'
@@ -81,7 +86,7 @@
         },
         beforeMount: function () {
             getTicket()
-                .then(r => this.operator = r)
+                .then(r => this.operator2 = r)
                 .then(r => getReferred(referredid))
                 //.then(log("get referred: "))
                 .then(r => {
@@ -112,7 +117,7 @@
                     .get("/yz/referred/dispatch", {
                         params: {
                             employer: this.employer,
-                            operator: this.operator,
+                            operator: this.operator2,
                             referredid: referredid,
                             source: this.source,
                         }

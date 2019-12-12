@@ -20,6 +20,7 @@ routerCron.get('/everyday', async function (req, res, next) {
     const rfs = req.data.rfs;
     const col = req.data.db.collection('referreds');
     rfs.forEach(rf => {
+        if(new Date().getDate() == rf.tracks.pop().update_time.getDate())return 0;
         const pushMsg = referred.pushMsg(col, rf.id);
         switch (rf.state) {
             case 'dispatched':

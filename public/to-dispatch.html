@@ -11,9 +11,12 @@
 <body>
 
 </body>
+<script type="text/javascript" src="./libs/common.js"></script>
 <script>
-    const corpID = "ww29233ad949e808bf";
-    const redirectUri = encodeURIComponent('http://www.all2key.cn/dispatch.html');
+    //const corpID = "ww29233ad949e808bf";
+    const rfid = getParamValue(window.location.href, 'referredid');
+    //const redirectUri = encodeURIComponent('http://www.all2key.cn/dispatch.html');
+    const redirectUri = encodeURIComponent('http://www.all2key.cn/dispatch.html?referredid=' + rfid);
     const state = 'dispatch';
     const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
     window.location.href = url;

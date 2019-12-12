@@ -24,7 +24,7 @@ const _rf = {
     pushMsg(msg, cb = null) {
         return this.col.updateOne(
             { id: this.rfid },
-            { $addToSet: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
+            { $push: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
             { upsert: false })
             .catch(console.log);
     },
@@ -61,7 +61,7 @@ const referred = {
         return function (msg, cb = null) {
             return col.updateOne(
                 { id: rfid },
-                { $addToSet: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
+                { $push: { sendMsgs: { update_time: new Date(), data: typeof cb == "function" ? cb(msg) : msg } } },
                 { upsert: false })
                 .catch(console.log);
         };
@@ -132,7 +132,7 @@ const referred = {
         return {
             "title": "有新转介绍信息",
             "description": createDesc(rf),
-            "url": `http://www.all2key.cn/dispatch.html?referredid=${rf.id}`,
+            "url": `http://www.all2key.cn/to-dispatch.html?referredid=${rf.id}`,
             "task_id": randomString(8) + rf.id,
             "btn": [{
                 "key": "new",
@@ -191,7 +191,7 @@ const mw = {
                 await col.updateOne(
                     { id: req.query.referredid },
                     {
-                        $addToSet: {
+                        $push: {
                             tracks: { action: "dispatch", update_time: new Date(), operator: req.query.operator, data: req.query }
                         },
                         $set: {
@@ -216,6 +216,8 @@ const mw = {
                     }]
                 };
                 await sentMsg.init({ touser: rf.order.dispatch_employer.id }).sentTaskcard(taskcard).then(pushMsg);
+                // send message to creater
+                await sentMsg.init({ touser: rf.order.creater.id }).sentText({ "content": `您创建的转介绍订单已指派给顾问${rf.order.dispatch_employer.name}跟进处理！` }).then(pushMsg);
                 // 更新任务卡片消息状态
                 rf.sendMsgs.forEach(msg => {
                     if (msg.data.title == '有新转介绍信息')
@@ -259,7 +261,7 @@ const mw = {
                 console.log("handle accept!");
                 col.updateOne(
                     { id: rfid },
-                    { $addToSet: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
+                    { $push: { tracks: { action: "accept", update_time: new Date(), operator: { id: post.FromUserName }, data: post } }, $set: { "state": "accepted" } },
                     { upsert: false })
                     .then(referred.getRf(col, rfid))
                     .then(rf => {
@@ -337,7 +339,7 @@ const mw = {
             const pushMsg = referred.pushMsg(col, req.query.referredid);
             col.updateOne(
                 { id: req.query.referredid },
-                { $addToSet: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
+                { $push: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
                 { upsert: false })
                 // get referred
                 .then(r => col.findOne({ id: req.query.referredid }))
@@ -355,7 +357,7 @@ const mw = {
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
                     // send msg to admin and creater
                     const admin = r.tracks.find(t => t.action == 'dispatch').operator.id;
-                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser('r.order.creater.id').sendMarkdown(content).then(pushMsg);
+                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser(r.order.creater.id).sendMarkdown(content).then(pushMsg);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
