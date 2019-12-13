@@ -1,7 +1,7 @@
 const axios = require('axios');
 const assert = require('assert');
 const config = require('./config.json');
-const sentMsg = require('./sent-msg');
+const SentMsg = require('./sent-msg');
 const { log, randomString, act } = require('./common');
 const sendQuery = require('./send_msg_to_users');
 
@@ -159,15 +159,16 @@ const mw = {
                 const taskcard = referred.rf2taskcardOfNew(rf);
 
                 const col = req.data.db.collection('referreds');
-                const pushMsg = referred.pushMsg(col, rf.id);
+                //const pushMsg = referred.pushMsg(col, rf.id);
                 //const _isDispatched = isDispatched(col, referred.id);
+                const sentMsg = new SentMsg(col, rf.id)
 
                 //write referred to db
                 await col.replaceOne({ "order.potential_customer.phone": rf.order.potential_customer.phone }, rf, { upsert: 1 });
                 //间隔60秒检查是否指派，未指派则发送消息给下一位管理员。问题：灵活度不够，例如多次循环发送，每天检查发送等。
                 //sendQuery(['YuChunJian', 'YuChunJian'], taskcard, _isDispatched, _pushMsg).exec(60);
                 //单次发送
-                await sentMsg.init({ touser: "YuChunJian" }).sentTaskcard(taskcard).then(pushMsg);
+                await sentMsg.init({ touser: "YuChunJian" }).sentTaskcard(taskcard);
 
                 //req.data.referred = referred;
                 res.json({ err: 0, msg: "新信息创建成功！" });
@@ -179,13 +180,13 @@ const mw = {
     },
     dispatch() {
         return async (req, res, next) => {
+            const col = req.data.db.collection('referreds');
             // req.query: { employer, operator, referredid, source }
             if (!req.query.employer || !req.query.referredid) {
                 next();
             }
             else {
-                const col = req.data.db.collection('referreds');
-                const pushMsg = referred.pushMsg(col, req.query.referredid);
+                //const pushMsg = referred.pushMsg(col, req.query.referredid);
                 // get admin info from adminId
                 // write action "dispatch" to object of referred
                 await col.updateOne(
@@ -215,9 +216,9 @@ const mw = {
                         "is_bold": true
                     }]
                 };
-                await sentMsg.init({ touser: rf.order.dispatch_employer.id }).sentTaskcard(taskcard).then(pushMsg);
+                await (new SentMsg(col, rf.id)).init({ touser: rf.order.dispatch_employer.id }).sentTaskcard(taskcard);
                 // send message to creater
-                await sentMsg.init({ touser: rf.order.creater.id }).sentText({ "content": `您创建的转介绍订单已指派给顾问${rf.order.dispatch_employer.name}跟进处理！` }).then(pushMsg);
+                await (new SentMsg(col, rf.id)).init({ touser: rf.order.creater.id }).sentText({ "content": `您创建的转介绍订单已指派给顾问${rf.order.dispatch_employer.name}跟进处理！` });
                 // 更新任务卡片消息状态
                 rf.sendMsgs.forEach(msg => {
                     if (msg.data.title == '有新转介绍信息')
@@ -257,7 +258,8 @@ const mw = {
             if (post.EventKey == 'accept' && post.Event == 'taskcard_click') {
                 const col = req.data.db.collection('referreds');
                 const rfid = post.TaskId.substr(8);
-                const pushMsg = referred.pushMsg(col, rfid);
+                //const pushMsg = referred.pushMsg(col, rfid);
+                const sentMsg = new SentMsg(col, rfid);
                 console.log("handle accept!");
                 col.updateOne(
                     { id: rfid },
@@ -281,7 +283,6 @@ const mw = {
                         return rf;
                     })
                     .then(r => sentMsg.init({ touser: r.tracks.find(t => t.action == 'dispatch').operator.id }).sentText({ content: `销售顾问${r.order.dispatch_employer.name}已接受指派任务！` }))
-                    .then(pushMsg)
                     .catch(err => console.log(err))
             } else {
                 next();
@@ -319,7 +320,7 @@ const mw = {
                 } else {
                     //send message to operator
                     //console.log("pre dispatch not find!");
-                    sentMsg.init({ touser: post.FromUserName }).sentText({ content: "自动指派顾问失败！可能顾问名字不正确，请点击任务卡手动指派。" }).then(msg => referred.pushMsg(msg)).catch(console.log)
+                    (new SentMsg(col, rfid)).init({ touser: post.FromUserName }).sentText({ content: "自动指派顾问失败！可能顾问名字不正确，请点击任务卡手动指派。" }).catch(console.log)
                 }
             } else {
                 next();
@@ -336,7 +337,8 @@ const mw = {
              * referredid: 'tJpO4tfReysQy7JU' }
              */
             const col = req.data.db.collection('referreds');
-            const pushMsg = referred.pushMsg(col, req.query.referredid);
+            //const pushMsg = referred.pushMsg(col, req.query.referredid);
+            const sentMsg = new SentMsg(col,req.query.referredid);
             col.updateOne(
                 { id: req.query.referredid },
                 { $push: { tracks: { action: req.query.state, update_time: new Date(), operator: { id: req.query.employerid }, data: req.query } }, $set: { "state": req.query.state } },
@@ -357,7 +359,7 @@ const mw = {
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${r.id})`;
                     // send msg to admin and creater
                     const admin = r.tracks.find(t => t.action == 'dispatch').operator.id;
-                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser(r.order.creater.id).sendMarkdown(content).then(pushMsg);
+                    return sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser(r.order.creater.id).sendMarkdown(content);
                 })
                 .then(r => next())
                 .catch(err => console.log(err))
