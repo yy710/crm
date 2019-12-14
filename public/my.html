@@ -5,16 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <style>
-        #app {
-            font-family: "Avenir", Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            /* text-align: center; */
-            color: #2c3e50;
-            /* margin-top: 60px; */
-        }
-    </style>
     <!-- 引入样式文件 -->
     <link rel="stylesheet" href="./styles/vant.css">
     <title>谊众CRM系统</title>
@@ -60,9 +50,21 @@
                     <van-col span="18">{{ rd.order.dispatch_employer.name }}
                     </van-col>
                 </van-row>
+                <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">订单历史</van-divider>
+                <van-steps direction="vertical" :active="rd.tracks.length-1">
+                    <van-step v-for="track in rd.tracks">
+                        <div>{{ act.get(track.action) }}<div>
+                                <div>{{ new Date(track.update_time).toLocaleString() }}</div>
+                                <div v-if="track.operator.name || track.data.message">
+                                    {{ track.operator.name }}：{{ track.data.message }}</div>
+                    </van-step>
+                </van-steps>
             </van-collapse-item>
         </van-collapse>
         <!--  <van-button type="default" @click="download">下载excel文件</van-button> -->
+       <!--  <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+            <p>刷新次数: {{ count }}</p>
+        </van-pull-refresh> -->
     </div>
 </body>
 <!-- 引入 Vue 和 Vant 的 JS 文件 -->
@@ -78,7 +80,9 @@
         data: {
             activeNames: [],
             operator: {},
-            referreds: {}
+            referreds: {},
+            count: 0,
+            isLoading: false
         },
         beforeMount: function () {
             //this.code = this.$route.query.code;
@@ -104,6 +108,13 @@
                 /* output format determined by filename */
                 // XLSX.writeFile(new_workbook, 'out.xlsx');
                 /* at this point, out.xlsb will have been downloaded */
+            },
+            onRefresh() {
+                setTimeout(() => {
+                    this.$toast('刷新成功');
+                    this.isLoading = false;
+                    this.count++;
+                }, 500);
             }
         },
         computed: {
