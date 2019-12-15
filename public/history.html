@@ -15,9 +15,11 @@
         <van-nav-bar title="订单历史"></van-nav-bar>
         <van-steps direction="vertical" :active="tracks.length-1">
             <van-step v-for="track in tracks">
-                <h3>{{track.action}}</h3>
-                <p>{{track.time}}</p>
-                <p>{{track.operatorName}}：{{track.message}}</p>
+                <h3>{{ track.action }}</h3>
+                <p>{{ track.time }}</p>
+                <p v-if="track.operator.name || track.message">
+                    操作员-{{ track.operator.name }}：{{ track.message }}
+                </p>
             </van-step>
         </van-steps>
         <van-button type="primary" @click="closeWindow" style="width: 100%;">关闭</van-button>
@@ -47,8 +49,8 @@
                     return {
                         action: act.get(item.action),
                         time: new Date(item.update_time).toLocaleString(),
-                        operatorName: item.operator.name || '',
-                        message: item.data.message || ''
+                        operator: item.operator,
+                        message: item.data.message
                     };
                 });
             });

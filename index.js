@@ -29,14 +29,14 @@ global.logEmitter = new LogEmitter();
 
 
 const schedule = require('node-schedule');
-const j1 = schedule.scheduleJob('*/5 9-17 * * *', function () {
-    console.log('111111The answer to life, the universe, and everything!');
+const j1 = schedule.scheduleJob('*/1 9-17 * * *', function () {
+    //console.log('111111The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
     axios.get('http://localhost/yz/referred/cron/minute5')
         .then(r => console.log("get cron1: ", JSON.stringify(r.data, null, 4)));
 });
 const j2 = schedule.scheduleJob({ hour: [9, 17], minute: 0 }, function () {
-    console.log('22222The answer to life, the universe, and everything!');
+    //console.log('22222The answer to life, the universe, and everything!');
     if (!global.crmdb) return;
     axios.get('http://localhost/yz/referred/cron/everyday')
         .then(r => console.log("get cron2: ", JSON.stringify(r.data, null, 4)));
@@ -55,7 +55,7 @@ app.use(bodyParser.json());
 app.use(xmlparser());
 
 app.use(function (req, res, next) {
-    console.log("req.query: ", req.query);
+    console.log("req.originalUrl: ", req.originalUrl);
     req.data = {};
     req.data.config = config;
     next();

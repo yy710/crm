@@ -48,7 +48,9 @@ routerCron.get('/minute5', function (req, res, next) {
     rfs.forEach(rf => {
         if (rf.state != 'new') return 0;
         const sentMsg = new SentMsg(col, rf.id)
-        const msg = Array.isArray(rf.sendMsgs) && rf.sendMsgs.length > 0 ? rf.sendMsgs.pop() : { update_time: new Date('2019-12-10'), data: { touser: 'YuChunJian', taskcard: referred.rf2taskcardOfNew(rf) } };
+        //console.log("/minute5 rf: ", rf);
+        const msg = Array.isArray(rf.sendMsgs) && rf.sendMsgs.length > 0 ? rf.sendMsgs.filter(m => m.data.taskcard && m.data.taskcard.title == "有新转介绍信息").pop() : { update_time: new Date('2019-12-10'), data: { touser: 'YuChunJian', taskcard: referred.rf2taskcardOfNew(rf) } };
+        //const msg = { update_time: new Date('2019-12-10'), data: { touser: 'YuChunJian', taskcard: referred.rf2taskcardOfNew(rf) } };
 
         if (new Date() - msg.update_time > 1 * 60 * 1000) {
             const users = referred.getAdmins(global.config.referred.adminId);

@@ -29,7 +29,7 @@
                 </van-col>
             </van-row>
         </van-radio-group>
-        <van-field v-model="message" rows="2" label="说明" type="textarea" maxlength="100" placeholder="请在此输入小于100字的相关说明"
+        <van-field v-model="message" rows="3" label="说明" type="textarea" maxlength="100" placeholder="请在此输入小于100字的相关说明"
             show-word-limit autosize></van-field>
         <van-button type="primary" @click="commit" style="width: 100%;">提交报告</van-button>
     </div>
@@ -50,7 +50,7 @@
         data: () => {
             return {
                 message: '',
-                state: '已成交'
+                state: 'success'
             }
         },
         beforeMount: function () {
@@ -70,7 +70,7 @@
                     .get("/yz/referred/commit", { params: { message: this.message, state: this.state, employerid, referredid } })
                     .then(r => vant.Toast.success(r.data.msg))
                     .then(r => setTimeout(wx.closeWindow, 2000))
-                    .catch(err => vant.Toast.fail("操作失败！"));
+                    .catch(err => vant.Toast.fail("提交报告失败！请稍后再试。。。"));
             }
         }
     });

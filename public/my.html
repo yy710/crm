@@ -54,15 +54,16 @@
                 <van-steps direction="vertical" :active="rd.tracks.length-1">
                     <van-step v-for="track in rd.tracks">
                         <div>{{ act.get(track.action) }}<div>
-                                <div>{{ new Date(track.update_time).toLocaleString() }}</div>
-                                <div v-if="track.operator.name || track.data.message">
-                                    {{ track.operator.name }}：{{ track.data.message }}</div>
+                        <div>{{ new Date(track.update_time).toLocaleString() }}</div>
+                        <div v-if="track.operator.name || track.data.message">
+                            操作员-{{ track.operator.name }}：{{ track.data.message }}
+                        </div>
                     </van-step>
                 </van-steps>
             </van-collapse-item>
         </van-collapse>
         <!--  <van-button type="default" @click="download">下载excel文件</van-button> -->
-       <!--  <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+        <!--  <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
             <p>刷新次数: {{ count }}</p>
         </van-pull-refresh> -->
     </div>

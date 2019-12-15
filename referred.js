@@ -374,7 +374,7 @@ function createDesc(ref) {
 }
 
 function updateTaskcardMsgs(rf, title) {
-    if (!Array.isArray(rf.sendMsgs)) return 0;
+    if (!Array.isArray(rf.sendMsgs) || rf.sendMsgs.length == 0) return 0;
     rf.sendMsgs.forEach(msg => {
         if (msg.data.taskcard && msg.data.taskcard.title == title) {
             const taskcard = msg.data.taskcard;

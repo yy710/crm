@@ -119,7 +119,7 @@ module.exports = function (express) {
         const rphone = req.query.customerPhone;
         const query = rid ? { id: rid } : { "order.potential_customer.phone": rphone };
         req.data.db.collection('referreds').findOne(query).then(r => {
-            console.log("get-referred: ", r);
+            //console.log("get-referred: ", r);
             res.json(r);
         }).catch(err => console.log(err));
     });
