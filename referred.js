@@ -348,7 +348,7 @@ const mw = {
                 >[点击查看订单历史](http://www.all2key.cn/history.html?referredid=${rf.id})`;
                 // send msg to admin and creater
                 const admin = rf.tracks.find(t => t.action == 'dispatch').operator.id;
-                await sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser(rf.order.creater.id).sendMarkdown(content);
+                await sentMsg.init({ touser: admin }).addToUser('YuChunJian').addToUser(rf.order.creater && rf.order.creater.id && rf.tracks[0].operator.id).sendMarkdown(content);
                 next();
             } catch (error) {
                 console.log("sync commit: ", error);

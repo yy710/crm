@@ -13,24 +13,30 @@
 <body>
     <div id="app">
         <van-nav-bar title="订单跟踪报告"></van-nav-bar>
-        <van-radio-group v-model="state" title="订单跟踪记录">
-            <van-row>
-                <van-col span="6">
+        <van-radio-group v-model="state">
+            <div style="display: flex;justify-content: space-around;">
+                <van-radio name="success">已成交</van-radio>
+                <van-radio name="ordered">已订车</van-radio>
+                <van-radio name="proceed">洽谈中</van-radio>
+                <van-radio name="fail">战败</van-radio>
+            </div>
+            <!--  <van-row type="flex" justify="space-around">
+                <van-col span="5">
                     <van-radio name="success">已成交</van-radio>
                 </van-col>
-                <van-col span="6">
+                <van-col span="5">
                     <van-radio name="ordered">已订车</van-radio>
                 </van-col>
-                <van-col span="6">
+                <van-col span="5">
                     <van-radio name="proceed">洽谈中</van-radio>
                 </van-col>
-                <van-col span="6">
+                <van-col span="5">
                     <van-radio name="fail">战败</van-radio>
                 </van-col>
-            </van-row>
+            </van-row> -->
         </van-radio-group>
-        <van-field v-model="message" rows="3" label="说明" type="textarea" maxlength="100" placeholder="请在此输入小于100字的相关说明"
-            show-word-limit autosize></van-field>
+        <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }"></van-divider>
+        <van-field v-model="message" rows="3" autosize label="说明" type="textarea" maxlength="100" placeholder="请在此输入小于100字的相关说明"></van-field>
         <van-button type="primary" @click="commit" style="width: 100%;">提交报告</van-button>
     </div>
 </body>
@@ -57,7 +63,7 @@
             //getTicket().then(r => this.operator = r);
             getReferred(referredid).then(r => {
                 //console.log(r);
-                if(r.state == 'dispatched')vant.Dialog.alert({ message: "请先接受任务！！！" }).then(wx.closeWindow);
+                if (r.state == 'dispatched') vant.Dialog.alert({ message: "请先接受任务！！！" }).then(wx.closeWindow);
                 const track = r.tracks.pop();
                 this.state = track.data.state;
                 this.message = track.data.message;
