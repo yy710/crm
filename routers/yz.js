@@ -127,13 +127,6 @@ module.exports = function (express) {
     routerReferred.use('/get-referreds', (req, res, next) => {
         const admins = config.referred.adminId.split('|');
         //console.log("admins: ", admins)
-
-        function myReferreds(isAdmin) {
-            const col = req.data.db.collection('referreds');
-            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(50).toArray();
-            return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
-        }
-
         // checout is admin?
         let isAdmin = false;
         for (i = 0; i < admins.length; i++) {
@@ -145,8 +138,14 @@ module.exports = function (express) {
 
         myReferreds(isAdmin)
             //.then(log("myReferreds(): "))
-            .then(r => res.json({ msg: "ok", referreds: r }))
+            .then(r => res.json({ msg: "ok", referreds: r, isAdmin }))
             .catch(err => console.log(err));
+
+        function myReferreds(isAdmin) {
+            const col = req.data.db.collection('referreds');
+            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(50).toArray();
+            return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
+        }
     });
 
     routerReferred.use('/commit', mw.commit(), (req, res, next) => {

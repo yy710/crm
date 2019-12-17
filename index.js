@@ -14,7 +14,7 @@ const MongoClient = require('mongodb').MongoClient;
 // 载入配置文件
 const config = require('./config.json');
 global.config = config;
-global.debug = false;
+global.debug = true;
 
 MongoClient.connect(config.crmDbUrl, { useUnifiedTopology: true }, function (err, client) {
     assert.equal(null, err);
@@ -41,6 +41,13 @@ const j2 = schedule.scheduleJob({ hour: [9, 17], minute: 0 }, function () {
     axios.get('http://localhost/yz/referred/cron/everyday')
         .then(r => console.log("get cron2: ", JSON.stringify(r.data, null, 4)));
 });
+
+// debug
+if(global.debug){
+    j1.cancel();
+    j2.cancel();
+}
+
 // 载入自定义模块
 
 // 创建 http 服务

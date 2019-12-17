@@ -18,6 +18,7 @@
         <div v-for="(value, name) in operator">
             {{ name }}: {{ value }}
         </div> -->
+        <van-popup v-model="popShow">内容</van-popup>
         <van-collapse v-model="activeNames" accordion>
             <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
                 <van-row slot="title" style="display: flex; align-items: baseline;">
@@ -31,9 +32,17 @@
                             :pivot-text="act.get(rd.state)" :inactive="rd.state=='fail'"></van-progress>
                     </van-col>
                 </van-row>
+                <van-row gutter="20" v-if="isAdmin">
+                    <van-col span="12"><van-button plain type="primary" size="small" @click="()=>showPopup(rd.id)">订单编辑</van-button></van-col>
+                </van-row>
                 <van-row gutter="20">
                     <van-col span="6">创建时间：</van-col>
                     <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}
+                    </van-col>
+                </van-row>
+                <van-row gutter="20">
+                    <van-col span="6">来源类型：</van-col>
+                    <van-col span="18">{{ rd.order.source_type }}
                     </van-col>
                 </van-row>
                 <van-row gutter="20">
@@ -54,10 +63,10 @@
                 <van-steps direction="vertical" :active="rd.tracks.length-1">
                     <van-step v-for="track in rd.tracks">
                         <div>{{ act.get(track.action) }}<div>
-                        <div>{{ new Date(track.update_time).toLocaleString() }}</div>
-                        <div v-if="track.operator.name || track.data.message">
-                            操作员-{{ track.operator.name }}：{{ track.data.message }}
-                        </div>
+                                <div>{{ new Date(track.update_time).toLocaleString() }}</div>
+                                <div v-if="track.operator.name || track.data.message">
+                                    操作员-{{ track.operator.name }}：{{ track.data.message }}
+                                </div>
                     </van-step>
                 </van-steps>
             </van-collapse-item>
@@ -83,7 +92,9 @@
             operator: {},
             referreds: {},
             count: 0,
-            isLoading: false
+            isLoading: false,
+            isAdmin: false,
+            popShow: false
         },
         beforeMount: function () {
             //this.code = this.$route.query.code;
@@ -94,6 +105,7 @@
                 .then(r => {
                     //console.log("referreds: ", r.data.referreds);
                     this.referreds = r.data.referreds;
+                    this.isAdmin = r.data.isAdmin;
                 })
                 .catch(err => console.log(err));
         },
@@ -116,6 +128,10 @@
                     this.isLoading = false;
                     this.count++;
                 }, 500);
+            },
+            showPopup(id) {
+                console.log("id: ", id);
+                this.popShow = true;
             }
         },
         computed: {

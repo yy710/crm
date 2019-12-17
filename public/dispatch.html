@@ -40,6 +40,9 @@
                 <van-cell title="保客营销" clickable @click="radio = '保客营销'">
                     <van-radio slot="right-icon" name="保客营销"></van-radio>
                 </van-cell>
+                <van-cell title="客户增购" clickable @click="radio = '客户增购'">
+                    <van-radio slot="right-icon" name="客户增购"></van-radio>
+                </van-cell>
             </van-cell-group>
         </van-radio-group>
         <van-cell>
@@ -85,7 +88,7 @@
             }
         },
         beforeMount: function () {
-            getTicket()
+            getTicket(["selectEnterpriseContact"])
                 .then(r => this.operator2 = r)
                 .then(r => getReferred(referredid))
                 //.then(log("get referred: "))
@@ -97,8 +100,8 @@
                         this.dispatchEmployer();
                     }
 
-                    this.customer = r.order.potential_customer.name + '---' + r.order.potential_customer
-                        .phone;
+                    if(r.order.potential_customer.phone == r.order.from_customer.phone)this.source = "客户增购";
+                    this.customer = r.order.potential_customer.name + '---' + r.order.potential_customer.phone;
                     this.from = r.order.from_customer.name + '---' + r.order.from_customer.phone;
                     this.operator = r.tracks[0].operator;
                     this.preEmployerName = r.tracks[0].data.preEmployerName || '';
