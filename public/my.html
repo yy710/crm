@@ -19,6 +19,19 @@
             {{ name }}: {{ value }}
         </div> -->
         <van-popup v-model="popShow">内容</van-popup>
+        <van-dropdown-menu>
+            <van-raw>
+                <van-col span="8">
+                    <van-dropdown-item v-model="dateRange" :options="dateRanges" />
+                </van-col>
+                <van-col span="8">
+                    <van-dropdown-item v-model="orderState" :options="orderStates" />
+                </van-col>
+                <van-col span="8">
+                    <van-dropdown-item v-model="page" :options="pages" />
+                </van-col>
+            </van-raw>
+        </van-dropdown-menu>
         <van-collapse v-model="activeNames" accordion>
             <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
                 <van-row slot="title" style="display: flex; align-items: baseline;">
@@ -32,13 +45,9 @@
                             :pivot-text="act.get(rd.state)" :inactive="rd.state=='fail'"></van-progress>
                     </van-col>
                 </van-row>
-                <van-row gutter="20" v-if="isAdmin">
-                    <van-col span="12"><van-button plain type="primary" size="small" @click="()=>showPopup(rd.id)">订单编辑</van-button></van-col>
-                </van-row>
                 <van-row gutter="20">
                     <van-col span="6">创建时间：</van-col>
-                    <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}
-                    </van-col>
+                    <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}</van-col>
                 </van-row>
                 <van-row gutter="20">
                     <van-col span="6">来源类型：</van-col>
@@ -56,7 +65,10 @@
                 </van-row>
                 <van-row gutter="20">
                     <van-col span="6">指派顾问：</van-col>
-                    <van-col span="18">{{ rd.order.dispatch_employer.name }}
+                    <van-col span="12">{{ rd.order.dispatch_employer.name }}</van-col>
+                    <van-col span="6">
+                        <van-button v-if="isAdmin" plain type="primary" size="mini" @click="()=>showPopup(rd.id)">订单编辑
+                        </van-button>
                     </van-col>
                 </van-row>
                 <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">订单历史</van-divider>
@@ -94,7 +106,31 @@
             count: 0,
             isLoading: false,
             isAdmin: false,
-            popShow: false
+            popShow: false,
+            dateRange: 'week',
+            orderState: 'all',
+            page: 0,
+            dateRanges: [
+                { text: '本周', value: "week" },
+                { text: '本月', value: "month" },
+                { text: '今年', value: "year" },
+                { text: '所有', value: "all" }
+            ],
+            orderStates: [
+                { text: '所有状态', value: 'all' },
+                { text: '新建信息', value: 'new' },
+                { text: '指派顾问', value: 'dispatched' },
+                { text: '接受指派', value: 'accepted' },
+                { text: '洽谈中', value: 'proceed' },
+                { text: '已订车', value: 'ordered' },
+                { text: '已成交', value: 'success' },
+                { text: '战败', value: 'fail' }
+            ],
+            pages: [
+                { text: '第1页', value: 0 },
+                { text: '第2页', value: 1 },
+                { text: '第3页', value: 2 },
+            ]
         },
         beforeMount: function () {
             //this.code = this.$route.query.code;

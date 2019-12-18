@@ -125,26 +125,29 @@ module.exports = function (express) {
     });
 
     routerReferred.use('/get-referreds', (req, res, next) => {
-        const admins = config.referred.adminId.split('|');
-        //console.log("admins: ", admins)
-        // checout is admin?
-        let isAdmin = false;
-        for (i = 0; i < admins.length; i++) {
-            if (req.query.op == admins[i]) {
-                isAdmin = true;
-                break;
-            }
-        }
-
-        myReferreds(isAdmin)
+        myReferreds(true)
             //.then(log("myReferreds(): "))
-            .then(r => res.json({ msg: "ok", referreds: r, isAdmin }))
+            .then(r => res.json({ msg: "ok", isAdmin: true, referreds: r }))
             .catch(err => console.log(err));
 
         function myReferreds(isAdmin) {
             const col = req.data.db.collection('referreds');
-            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).limit(50).toArray();
+            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }, { $skip: 0 }, { $limit: 20 }, { $project: { "sendMsgs": 0 } }]).toArray();
             return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
+        }
+
+        function isAdmin(user) {
+            const admins = global.config && global.config.referred.adminId.split('|');
+            //console.log("admins: ", admins)
+            for (i = 0; i < admins.length; i++) {
+                if (user == admins[i]) {
+                    isAdmin = true;
+                    return true;
+                }
+            }
+            return false;
+            // sample method
+            // return !!admins.find(u=>u==user);
         }
     });
 
