@@ -137,7 +137,7 @@
             //this.code = window.location.href;
             getTicket()
                 .then(r => this.operator = r)
-                .then(r => axios.get(`/yz/referred/get-referreds?op=YuChunJian`))//${this.operator.id}
+                .then(r => axios.get(`/yz/referred/get-referreds?op=${this.operator.id}`))
                 .then(r => {
                     //console.log("referreds: ", r.data.referreds);
                     this.referreds = r.data.referreds;

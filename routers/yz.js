@@ -124,36 +124,23 @@ module.exports = function (express) {
         }).catch(err => console.log(err));
     });
 
-    routerReferred.use('/get-referreds', (req, res, next) => {
-        myReferreds(true)
-            //.then(log("myReferreds(): "))
-            .then(r => res.json({ msg: "ok", isAdmin: true, referreds: r }))
-            .catch(err => console.log(err));
-
-        function myReferreds(isAdmin) {
+    routerReferred.use('/get-referreds', async (req, res, next) => {
+        try {
+            const user = req.query.op;
             const col = req.data.db.collection('referreds');
-            if (isAdmin) return col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }, { $skip: 0 }, { $limit: 20 }, { $project: { "sendMsgs": 0 } }]).toArray();
-            return col.find({ "order.dispatch_employer.id": req.query.op }).toArray();
-        }
-
-        function isAdmin(user) {
             const admins = global.config && global.config.referred.adminId.split('|');
-            //console.log("admins: ", admins)
-            for (i = 0; i < admins.length; i++) {
-                if (user == admins[i]) {
-                    isAdmin = true;
-                    return true;
-                }
-            }
-            return false;
-            // sample method
-            // return !!admins.find(u=>u==user);
+            const pipe = [{ $sort: { "_id": -1 } }, { $skip: 0 }, { $limit: 20 }, { $project: { "sendMsgs": 0 } }];
+            const isAdmin = !!admins.find(u => u == user);
+            1 ? pipe.unshift({ $match: {} }) : pipe.unshift({ $match: { "order.dispatch_employer.id": user } });
+            console.log("pipe: ", pipe)
+            const referreds = await col.aggregate(pipe).toArray();
+            res.json({ msg: "ok", isAdmin, referreds })
+        } catch (error) {
+            console.log("/get-referreds error: ", error)
         }
     });
 
-    routerReferred.use('/commit', mw.commit(), (req, res, next) => {
-        res.json({ code: 0, msg: "提交成功！" });
-    });
+    routerReferred.use('/commit', mw.commit(), (req, res, next) => res.json({ code: 0, msg: "提交成功！" }));
 
     routerReferred.use('/get-jsapi-ticket',
         routerAccessToken,
