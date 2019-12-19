@@ -9,7 +9,8 @@ const data = {
         from_customer: { id: 6, name: "刘备", phone: "12565767876" },
         creater: { id, name, mobile },
         carType: "宝来",
-        source_type: "转介绍"
+        source_type: "转介绍",
+        create_time: new Date()
     },
     // 订单当前状态
     state: "new",

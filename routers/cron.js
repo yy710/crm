@@ -44,7 +44,8 @@ routerCron.get('/everyday', async function (req, res, next) {
 routerCron.get('/minute5', async function (req, res, next) {
     try {
         console.log("enter cron/minute5");
-        const rfs = await req.data.db.collection('referreds').find({ state: "new" }).toArray();
+        const col = req.data.db.collection('referreds');
+        const rfs = await col.find({ state: "new" }).toArray();
 
         rfs.forEach(rf => {
             if (rf.state != 'new') return 0;

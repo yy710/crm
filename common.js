@@ -137,6 +137,78 @@ class TaskQuery {
     }
 }
 
+function getDaysOfThisWeek() {
+    //const dateOfToday = new Date().getTime();
+    const dateOfToday = Date.now();
+    const dayOfToday = (new Date().getDay() + 7 - 1) % 7;
+    //return Array.from(new Array(7)).map((_, i) => new Date(dateOfToday + (i - dayOfToday) * 1000 * 60 * 60 * 24));
+    return Array.from(new Array(7)).map((_, i) => {
+        const date = new Date(dateOfToday + (i - dayOfToday) * 1000 * 60 * 60 * 24)
+        return date.getFullYear() +
+            '-' +
+            String(date.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(date.getDate()).padStart(2, '0')
+    })
+}
+
+const myDate = {
+    /**
+ * 获取指定日期的周的第一天、月的第一天、季的第一天、年的第一天
+ * @param date new Date()形式，或是自定义参数的new Date()
+ * @returns 返回值为格式化的日期，yy-mm-dd
+ */
+    //日期格式化，返回值形式为yy-mm-dd
+    timeFormat(date) {
+        if (!date || typeof (date) === "string") {
+            this.error("参数异常，请检查...");
+        }
+        var y = date.getFullYear(); //年
+        var m = date.getMonth() + 1; //月
+        var d = date.getDate(); //日
+
+        return y + "-" + m + "-" + d;
+    },
+
+    //获取这周的周一
+    getFirstDayOfWeek(date) {
+
+        var weekday = date.getDay() || 7; //获取星期几,getDay()返回值是 0（周日） 到 6（周六） 之间的一个整数。0||7为7，即weekday的值为1-7
+
+        date.setDate(date.getDate() - weekday + 1);//往前算（weekday-1）天，年份、月份会自动变化
+        return this.timeFormat(date);
+    },
+
+    //获取当月第一天
+    getFirstDayOfMonth(date) {
+        date.setDate(1);
+        return this.timeFormat(date);
+    },
+
+    //获取当季第一天
+    getFirstDayOfSeason(date) {
+        var month = date.getMonth();
+        if (month < 3) {
+            date.setMonth(0);
+        } else if (2 < month && month < 6) {
+            date.setMonth(3);
+        } else if (5 < month && month < 9) {
+            date.setMonth(6);
+        } else if (8 < month && month < 11) {
+            date.setMonth(9);
+        }
+        date.setDate(1);
+        return this.timeFormat(date);
+    },
+
+    //获取当年第一天
+    getFirstDayOfYear(date) {
+        date.setDate(1);
+        date.setMonth(0);
+        return this.timeFormat(date);
+    }
+};
+
 module.exports = {
     act,
     TaskQuery,
@@ -147,5 +219,7 @@ module.exports = {
     getParamValue,
     isDispatched,
     pushMsg,
-    createId
+    createId,
+    getDaysOfThisWeek,
+    myDate
 };

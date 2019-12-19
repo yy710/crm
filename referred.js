@@ -106,9 +106,10 @@ const referred = {
         * preEmployerName: 建议指派顾问姓名, 
         * operator: { id, name, mobile} 创建人信息 }
         */
+        const date = new Date();
         return {
             // 订单识别ID
-            id: new Date().getTime().toString(),
+            id: date.getTime().toString(),
             // 订单基础信息，通常不需要更改
             order: {
                 potential_customer: { id: 0, name: rq.customerName, phone: rq.customerPhone },
@@ -116,7 +117,8 @@ const referred = {
                 from_customer: { id: 0, name: rq.fromName, phone: rq.fromPhone },
                 creater: rq.operator,
                 carType: rq.carType,
-                source_type: '转介绍'
+                source_type: '转介绍',
+                create_time: date
             },
             // 订单当前状态
             state: "new",
@@ -125,7 +127,7 @@ const referred = {
             // 订单跟踪记录
             tracks: [{
                 action: "new",
-                update_time: new Date(),
+                update_time: date,
                 operator: rq.operator,
                 data: rq
             }]

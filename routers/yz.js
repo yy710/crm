@@ -6,7 +6,7 @@ const { referred, mw } = require('../referred');
 const { replyEchostr, handleMsg } = require('../wx-msg');
 const config = require('../config.json');
 const XLSX = require('xlsx');
-const { getParamValue, act } = require('../common');
+const { getParamValue, act, getDaysOfThisWeek, myDate } = require('../common');
 
 module.exports = function (express) {
     const router = express.Router();
@@ -126,15 +126,47 @@ module.exports = function (express) {
 
     routerReferred.use('/get-referreds', async (req, res, next) => {
         try {
+            const maxRf = 25;
+            const page = parseInt(req.query.page);
             const user = req.query.op;
             const col = req.data.db.collection('referreds');
             const admins = global.config && global.config.referred.adminId.split('|');
-            const pipe = [{ $sort: { "_id": -1 } }, { $skip: 0 }, { $limit: 20 }, { $project: { "sendMsgs": 0 } }];
-            const isAdmin = !!admins.find(u => u == user);
-            1 ? pipe.unshift({ $match: {} }) : pipe.unshift({ $match: { "order.dispatch_employer.id": user } });
-            console.log("pipe: ", pipe)
+            const pipe = [{ $sort: { "_id": -1 } }, { $skip: page * maxRf }, { $limit: maxRf }, { $project: { "sendMsgs": 0 } }];
+            let isAdmin = !!admins.find(u => u == user);
+            // flite by  order state
+            if (req.query.orderState != 'all') pipe.unshift({ $match: { "state": req.query.orderState } });
+
+            function getRange(dateRange) {
+                let day = null;
+                switch (dateRange) {
+                    case 'week':
+                        day = myDate.getFirstDayOfWeek(new Date());
+                        break;
+                    case 'month':
+                        day = myDate.getFirstDayOfMonth(new Date());
+                        break;
+                    case 'season':
+                        day = myDate.getFirstDayOfSeason(new Date());
+                        break;
+                    case 'year':
+                        day = myDate.getFirstDayOfYear(new Date());
+                        break;
+                    case 'all':
+                        break;
+                    default:
+                        day = myDate.getFirstDayOfWeek(new Date());
+                        break;
+                }
+                return day;
+            }
+
+            pipe.unshift({ $match: { "order.create_time": { $gte: new Date(getRange(req.query.timeRange)) } } });
+
+            //1 ? pipe.unshift({ $match: { "order.create_time": { $gte: new Date(firstDayOfThisWeek) } } }) : pipe.unshift({ $match: { "order.dispatch_employer.id": user } });
+            if (global.debug) console.log("pipe: ", JSON.stringify(pipe, null, 4));
             const referreds = await col.aggregate(pipe).toArray();
-            res.json({ msg: "ok", isAdmin, referreds })
+            if (global.debug) isAdmin = true;
+            res.json({ msg: "ok", isAdmin, referreds, next: referreds.length == maxRf, page })
         } catch (error) {
             console.log("/get-referreds error: ", error)
         }
@@ -169,6 +201,16 @@ module.exports = function (express) {
     );
 
     routerReferred.use('/cron', require('./cron.js'));
+
+    routerReferred.use('/addCreateTime', function (req, res, next) {
+        const col = req.data.db.collection('referreds');
+        col.find().toArray().then(rfs => {
+            rfs.forEach(rf => {
+                col.update({ id: rf.id }, { $set: { "order.create_time": rf.tracks[0].update_time } }, { upsert: false });
+            });
+        }).catch(err => console.log(err));
+        res.json({ msg: "ok!" });
+    });
 
     return router;
 }
