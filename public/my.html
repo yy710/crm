@@ -210,10 +210,10 @@
                 // 异步更新数据
                 axios.get(`/yz/referred/get-referreds?op=${this.operator.id}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=${this.page + 1}`)
                     .then(r => {
-                        console.log("data.referreds: ", r.data.referreds);
+                        //console.log("data.referreds: ", r.data.referreds);
                         //this.referreds = r.data.referreds;
                         this.referreds.push(...r.data.referreds);
-                        console.log("this.referreds: ", this.referreds);
+                        //console.log("this.referreds: ", this.referreds);
                         this.isAdmin = r.data.isAdmin;
                         this.finished = !r.data.next;
                         this.page = r.data.page;
