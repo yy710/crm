@@ -50,7 +50,7 @@ module.exports = function (express) {
         };
         col.aggregate([{ $match: {} }, { $sort: { "_id": -1 } }]).toArray().then(r => {
             const _r = r.map(rf => {
-                console.log(rf);
+                //console.log(rf);
                 return {
                     "订单号": rf.id,
                     "订单状态": act.get(rf.state),
@@ -105,6 +105,10 @@ module.exports = function (express) {
         mw.dispatch());
 
     routerReferred.use('/new', mw.new());
+
+    routerReferred.use('/modify-referred', (req, res, next) => {
+        res.json({ msg: "修改成功！" });
+    });
 
     routerReferred.use('/getToken',
         routerAccessToken,

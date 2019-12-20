@@ -14,7 +14,7 @@ const MongoClient = require('mongodb').MongoClient;
 // 载入配置文件
 const config = require('./config.json');
 global.config = config;
-global.debug = false;
+global.debug = true;
 
 MongoClient.connect(config.crmDbUrl, { useUnifiedTopology: true }, function (err, client) {
     assert.equal(null, err);

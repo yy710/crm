@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="./styles/vant.css">
+    <title>转介绍订单修改</title>
+</head>
+
+<body>
+    <div id="app">
+        <van-nav-bar title="修改转介绍信息"></van-nav-bar>
+        <van-cell-group title="客户信息：">
+            <van-field v-model="customerName" maxlength="10" label="客户姓名：" left-icon="contact"></van-field>
+            <van-field v-model="customerPhone" type="tel" label="客户手机：" :error-message="telErrMsgA" left-icon="phone-o"
+                @input="function(e){telErrMsgA=validMobile(e)}">
+            </van-field>
+            <van-field readonly clickable label="意向车型" :value="carType" placeholder="请选择车型" @click="showPicker = true">
+            </van-field>
+            <van-popup v-model="showPicker" position="bottom">
+                <van-picker show-toolbar :columns="carTypes" @cancel="showPicker = false" @confirm="onConfirm" />
+            </van-popup>
+            </van-field>
+        </van-cell-group>
+        <van-cell-group title="介绍人信息：">
+            <van-field v-model="fromName" label="介绍人姓名：" maxlength="10"></van-field>
+            <van-field v-model="fromPhone" type="tel" label="介绍人手机：" :error-message="telErrMsgB"
+                @input="function(e){telErrMsgB=validMobile(e)}"></van-field>
+        </van-cell-group>
+        <van-radio-group v-model="sourceType">
+            <van-cell-group title="选择信息来源：">
+                <van-cell title="转介绍" clickable @click="radio = '转介绍'">
+                    <van-radio slot="right-icon" name="转介绍"></van-radio>
+                </van-cell>
+                <van-cell title="保客营销" clickable @click="radio = '保客营销'">
+                    <van-radio slot="right-icon" name="保客营销"></van-radio>
+                </van-cell>
+                <van-cell title="客户增购" clickable @click="radio = '客户增购'">
+                    <van-radio slot="right-icon" name="客户增购"></van-radio>
+                </van-cell>
+            </van-cell-group>
+        </van-radio-group>
+        <van-cell>
+            <van-button :disabled="disableButton" type="primary" style="width: 100%" @click="modifyRf">确认修改以上信息
+            </van-button>
+        </van-cell>
+    </div>
+</body>
+<!-- 引入 Vue 和 Vant 的 JS 文件 -->
+<script type="text/javascript" src="./libs/vue.min.js"></script>
+<script type="text/javascript" src="./libs/vant.min.js"></script>
+<script type="text/javascript" src="./libs/axios.min.js"></script>
+<script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
+<script type="text/javascript" src="./libs/common.js"></script>
+<script>
+    //const routes = [];
+    //const router = new VueRouter({ mode: 'history', routes });
+    const rfid = getParamValue(window.location.href, 'rfid');
+    const op = getParamValue(window.location.href, 'op');
+
+    const app = new Vue({
+        el: "#app",
+        data: {
+            customerName: null,
+            customerPhone: null,
+            carTypes: ['宝来', '速腾', '迈腾', '高尔夫', '嘉旅', 'CC', '探歌', '探岳', '捷达VA3', '捷达VS5'],
+            carType: '',
+            showPicker: false,
+            fromName: null,
+            fromPhone: null,
+            sourceType: '转介绍',
+            operator: {
+                name: '',
+                mobile: '',
+                id: ''
+            },
+            telErrMsgA: null,
+            telErrMsgB: null,
+            disableButton: false
+        },
+        beforeMount: function () {
+            getReferred(rfid).then(rf => {
+                this.customerName = rf.order.potential_customer.name;
+                this.customerPhone = rf.order.potential_customer.phone;
+                this.carType = rf.order.carType;
+                this.fromName = rf.order.from_customer.name;
+                this.fromPhone = rf.order.from_customer.phone;
+                this.sourceType = rf.order.source_type;
+            }).catch(err => console.log(err))
+        },
+        methods: {
+            onConfirm(value) {
+                this.carType = value;
+                this.showPicker = false;
+            },
+            onChange(picker, value, index) {
+                //Toast(`当前值：${value}, 当前索引：${index}`);
+                this.carType = value;
+            },
+            validMobile(e) {
+                const reg = /^1(3[0-9]|4[5,7]|5[0,1,2,3,5,6,7,8,9]|6[2,5,6,7]|7[0,1,7,8]|8[0-9]|9[1,8,9])\d{8}$/;
+                return reg.test(e) ? null : '号码错误！';
+            },
+            modifyRf() {
+                const sendData = {
+                    customerName: this.customerName,
+                    customerPhone: this.customerPhone,
+                    carType: this.carType,
+                    fromName: this.fromName,
+                    fromPhone: this.fromPhone,
+                    sourceType: this.sourceType,
+                    operator: { id: op }
+                };
+
+                if (!this.customerName || !this.customerPhone || this.telErrMsgA || this.telErrMsgB || !this.fromName || !this.fromPhone) {
+                    vant.Dialog({ message: "请正确填写客户及介绍人信息！" });
+                    //this.disableButton = true;
+                    return;
+                }
+
+                console.log("sendData: ", sendData);
+                //window.history.back(-1);
+                send(sendData);
+
+                function send(data) {
+                    // send data to server
+                    return axios
+                        .get("/yz/referred/modify-referred", { params: data })
+                        //.then(r => window.alert(r.data.msg))
+                        .then(r => vant.Toast.success(r.data.msg))
+                        .then(r => setTimeout(() => window.history.back(-1), 2000))
+                        .catch(err => vant.Toast.fail("信息更新失败，请稍后再试！"));
+                }
+            }
+        }
+    })
+</script>
+
+</html>

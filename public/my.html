@@ -18,7 +18,7 @@
         <div v-for="(value, name) in operator">
             {{ name }}: {{ value }}
         </div> -->
-        <van-popup v-model="popShow"><img src="./assent/timg2.jpeg" alt="正在加班加点开发中！" srcset=""></van-popup>
+       
         <van-dropdown-menu>
             <van-raw>
                 <van-col span="6">
@@ -33,7 +33,8 @@
             </van-raw>
         </van-dropdown-menu>
 
-        <van-list v-model="loading" :finished="finished" finished-text="-----数据加载结束-----" @load="getMore" :immediate-check="false">
+        <van-list v-model="loading" :finished="finished" finished-text="-----数据加载结束-----" @load="getMore"
+            :immediate-check="false">
             <van-collapse v-model="activeNames" accordion>
                 <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
                     <van-row slot="title" style="display: flex; align-items: baseline;">
@@ -72,9 +73,10 @@
                         <van-col span="6">指派顾问：</van-col>
                         <van-col span="12">{{ rd.order.dispatch_employer.name }}</van-col>
                         <van-col span="6">
-                            <van-button v-if="isAdmin" plain type="primary" size="mini" @click="()=>showPopup(rd.id)">
-                                订单编辑
-                            </van-button>
+                          <!--   <van-button v-if="isAdmin" plain type="primary" size="mini" @click="()=>navTo(rd.id)">
+                                修改订单
+                            </van-button> -->
+                            <a :href="'./edit-referred.html?rfid='+rd.id+'&op='+operator.id">修改订单</a>
                         </van-col>
                     </van-row>
                     <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">订单历史
@@ -106,12 +108,24 @@
 <!-- <script type="text/javascript" src="./libs/xlsx.full.min.js"></script> -->
 <script type="text/javascript" src="./libs/common.js"></script>
 <script>
+    Vue.component('my-pop',
+        {
+            data: function () {
+                return {
+                    count: 0
+                };
+            },
+            props: ['title'],
+            template: '<div>aaa</div>'
+        }
+    );
+
     const app = new Vue({
         el: "#app",
         data: {
             activeNames: [],
             operator: {},
-            referreds: {},
+            referreds: [],
             count: 0,
             isLoading: false,
             isAdmin: false,
@@ -140,6 +154,7 @@
                 { text: '创建时间排序', value: 0 },
                 { text: '状态更新时间排序', value: 1 },
             ],
+            editRf: {},
             loading: false,
             finished: false,
             next: false,
@@ -157,7 +172,8 @@
                     //console.log("this.referreds: ", this.referreds);
                     this.isAdmin = r.data.isAdmin;
                     this.finished = !r.data.next;
-                    this.page = r.data.popShow;
+                    this.page = r.data.page;
+                    //this.editRf = this.referreds[0];
                 })
                 .catch(err => console.log(err));
         },
@@ -181,8 +197,9 @@
                     this.count++;
                 }, 500);
             },
-            showPopup(id) {
-                console.log("id: ", id);
+            showPopup(index) {
+                console.log("index: ", index);
+                this.editRf = this.referreds[index];
                 this.popShow = true;
             },
             changeTimeRange(value) {
@@ -222,16 +239,17 @@
                         this.loading = false;
                     })
                     .catch(err => console.log(err));
+            },
+            navTo(rfid){
+                const url = `./edit-referred.html?rfid=${rfid}&op=${this.operator.id}`;
+                //console.log("navTo: ", url);
+                window.location.href = url;
             }
         },
         computed: {
-            timeString() {
-                return this.referreds.map(item => {
-                    return new Date(item.tracks[0].update_time).toLocaleString();
-                });
-            }
+          
         }
-    })
+    });
 </script>
 
 </html>
