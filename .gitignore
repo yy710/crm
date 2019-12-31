@@ -67,3 +67,4 @@ typings/
 config.json
 temp/
 .DS_Store
+public/base.apk

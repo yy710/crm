@@ -23,10 +23,10 @@ routerCron.get('/everyday', async function (req, res, next) {
             } else if (rf.state == 'accepted' || rf.state == 'proceed') {
                 // send text to employer
                 console.log("cron send message of accepted");
-                sendToEmployer({ "content": "温馨提醒：您还有需继续跟进的转介绍订单。请点击相应任务卡片及时汇报跟进情况！" }).catch(err => console.log(err));
+                //sendToEmployer({ "content": "温馨提醒：您还有需继续跟进的转介绍订单。请点击相应任务卡片及时汇报跟进情况！" }).catch(err => console.log(err));
             } else if (rf.state == 'ordered') {
                 console.log("cron send message of ordered");
-                sendToEmployer({ "content": "温馨提醒：您有已订车的转介绍订单，请及时提交最新进展！" }).catch(err => console.log(err));
+                //sendToEmployer({ "content": "温馨提醒：您有已订车的转介绍订单，请及时提交最新进展！" }).catch(err => console.log(err));
             }
         });
         res.json({ msg: "everyday ok!" });
