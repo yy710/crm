@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.8/lib/index.css" />
+    <title>谊众考试系统</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <van-cell><span>录入人员：{{ operator.name }}——{{ operator.mobile }}</span></van-cell>
+      <van-cell><van-button :disabled="disableButton" type="primary" block @click="answer">确认</van-button></van-cell>
+    </div>
+  </body>
+  <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vant@2.8/lib/vant.min.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+  <script type="text/javascript" src="./util.js"></script>
+  <script>
+    //const routes = [];
+    //const router = new VueRouter({ mode: 'history', routes });
+
+    const app = new Vue({
+      el: '#app',
+      data: { 
+        answers: [], 
+        operator: {},
+        disableButton: true 
+      },
+      beforeMount: function () {
+        getUser()
+          // operate = { id, name, mobile }
+          .then(log("getUser(): "))
+          .then(r => this.operator = r)
+          .catch(err => console.log(err));
+      },
+      methods: {
+        answer() {
+          // send data to server
+          return axios
+            .get('/exam/answer', { params: this.answers })
+            .then(r => vant.Toast.success(r.data.msg))
+            .then(r => setTimeout(wx.closeWindow, 2000))
+            .catch(err => vant.Toast.fail('信息创建失败！'));
+        }
+      }
+    });
+  </script>
+</html>

@@ -1,0 +1,1 @@
+import('./m.mjs').then(m => console.log(m)).catch(err => console.log(err));

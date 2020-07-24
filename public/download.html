@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.8/lib/index.css" />
+    <title>数据下载</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <!-- <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">无下载权限！</van-divider> -->
+      <van-popup v-model="popup" closeable position="bottom" :style="{ height: '30%' }">
+        <van-datetime-picker v-model="selectDate" type="date" :title="pickerTitle" :min-date="minDate" :max-date="maxDate"
+          @confirm="onConfirmSelectDate" @change="onChangeDate"></van-datetime-picker>
+      </van-popup>
+
+      <van-cell-group title="请选择时间范围">
+        <van-cell title="开始时间" :value="startDateString" @click="selectStartDate"></van-cell>
+        <van-cell title="结束时间" :value="endDateString" @click="selectEndDate"></van-cell>
+      </van-cell-group>
+
+      <van-button type="primary" @click="download" block>下载数据</van-button>
+    </div>
+  </body>
+  <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vant@2.8/lib/vant.min.js"></script>
+  <script type="text/javascript" src="./libs/axios.min.js"></script>
+  <script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
+  <script type="text/javascript" src="./libs/common.js"></script>
+  <script>
+    // const referredid = getParamValue(window.location.href, 'referredid');
+    // const host = 'http://www.all2key.cn';
+    const host = '';
+    const app = new Vue({
+      el: '#app',
+      //router,
+      data: () => {
+        return {
+          popup: false,
+          minDate: new Date(2019, 10, 1),
+          maxDate: new Date(),
+          selectDate: new Date(),
+          pickerTitle: '',
+          start: new Date(2019, 10, 1),
+          end: new Date()
+        };
+      },
+      computed: {
+        startDateString() {
+          return formatDate(this.start);
+        },
+        endDateString() {
+          return formatDate(this.end);
+        }
+      },
+      beforeMount: function() {
+        //getTicket().then(r => this.operator = r);
+      },
+      methods: {
+        showPopup() {
+          this.popup = true;
+        },
+        hidePopup() {
+          this.popup = false;
+        },
+        closeWindow() {
+          wx.closeWindow();
+        },
+        selectStartDate() {
+          this.pickerTitle = '请选择开始日期';
+          this.minDate = new Date(2019, 10, 1);
+          this.showPopup();
+        },
+        selectEndDate() {
+          this.pickerTitle = '请选择结束日期';
+          this.minDate = this.start;
+          this.showPopup();
+        },
+        onConfirmSelectDate(value) {
+          // console.log('onConfirmSelectDate(%s): ', value);
+          // if (this.pickerTitle == '请选择开始日期') {
+          //   this.start = value;
+          // } else if (this.pickerTitle == '请选择结束日期') {
+          //   this.end = value;
+          // }
+          this.hidePopup();
+        },
+        download() {
+          const url = `${host}/yz/referred/download?op=admin&start=${this.start.getTime()}&end=${this.end.getTime()}`;
+          window.location.href = url;
+        },
+        onChangeDate(e) {
+          if (this.pickerTitle == '请选择开始日期') {
+            this.start = this.selectDate;
+          } else if (this.pickerTitle == '请选择结束日期') {
+            this.end = this.selectDate;
+          }
+        }
+      }
+    });
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const hour = date.getHours();
+      const minute = date.getMinutes();
+      const second = date.getSeconds();
+      return [year, month, day].map(formatNumber).join('-'); // + ' ' + [hour, minute, second].map(formatNumber).join(':');
+    };
+
+    function formatNumber(n) {
+      n = n.toString();
+      return n[1] ? n : '0' + n;
+    };
+  </script>
+</html>

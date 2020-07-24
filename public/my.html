@@ -1,255 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <!-- 引入样式文件 -->
-    <link rel="stylesheet" href="./styles/vant.css">
+    <link rel="stylesheet" href="./styles/vant.css" />
     <title>谊众CRM系统</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="app">
-        <!--  <div v-for="(value, name) in referreds">
-            {{ name }}: {{ value }}
-        </div>
-        <div v-for="(value, name) in operator">
-            {{ name }}: {{ value }}
-        </div> -->
-       
-        <van-dropdown-menu>
-            <van-raw>
-                <van-col span="6">
-                    <van-dropdown-item v-model="timeRange" :options="timeRanges" @change="changeTimeRange" />
-                </van-col>
-                <van-col span="6">
-                    <van-dropdown-item v-model="orderState" :options="orderStates" @change="changeOrderState" />
-                </van-col>
-                <!--   <van-col span="10">
-                    <van-dropdown-item v-model="sort" :options="sorts" />
-                </van-col> -->
-            </van-raw>
-        </van-dropdown-menu>
+      <!-- <div v-for="(value, name) in referreds">{{ name }}: {{ value }}</div> -->
+      <!-- <div v-for="(value, name) in operator">{{ name }}: {{ value }}</div> -->
 
-        <van-list v-model="loading" :finished="finished" finished-text="-----数据加载结束-----" @load="getMore"
-            :immediate-check="false">
-            <van-collapse v-model="activeNames" accordion>
-                <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
-                    <van-row slot="title" style="display: flex; align-items: baseline;">
-                        <van-col span="10">
-                            {{ rd.order.potential_customer.name }}-{{ rd.order.potential_customer.phone }}
-                        </van-col>
-                        <van-col span="4">
-                            <van-tag round>{{ rd.order.carType }}</van-tag>
-                        </van-col>
-                        <van-col span="10">
-                            <van-progress :percentage="state2num(rd.state)" stroke-width="8" color="#f2826a"
-                                :pivot-text="act.get(rd.state)" :inactive="rd.state=='fail'"></van-progress>
-                        </van-col>
-                    </van-row>
-                    <van-row gutter="20">
-                        <van-col span="6">创建时间：</van-col>
-                        <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}</van-col>
-                    </van-row>
-                    <van-row gutter="20">
-                        <van-col span="6">来源类型：</van-col>
-                        <van-col span="18">{{ rd.order.source_type }}
-                        </van-col>
-                    </van-row>
-                    <van-row gutter="20">
-                        <van-col span="6">创建人：</van-col>
-                        <van-col span="18">
-                            {{ rd.tracks[0].data.operator.name }}---{{ rd.tracks[0].data.operator.mobile }}
-                        </van-col>
-                    </van-row>
-                    <van-row gutter="20">
-                        <van-col span="6">介绍人：</van-col>
-                        <van-col span="18">{{ rd.order.from_customer.name }}---{{ rd.order.from_customer.phone }}
-                        </van-col>
-                    </van-row>
-                    <van-row gutter="20">
-                        <van-col span="6">指派顾问：</van-col>
-                        <van-col span="12">{{ rd.order.dispatch_employer.name }}</van-col>
-                        <van-col span="6">
-                          <!--   <van-button v-if="isAdmin" plain type="primary" size="mini" @click="()=>navTo(rd.id)">
-                                修改订单
-                            </van-button> -->
-                            <a :href="'./edit-referred.html?rfid='+rd.id+'&op='+operator.id">修改订单</a>
-                        </van-col>
-                    </van-row>
-                    <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">订单历史
-                    </van-divider>
-                    <van-steps direction="vertical" :active="rd.tracks.length-1">
-                        <van-step v-for="track in rd.tracks">
-                            <div>{{ act.get(track.action) }}<div>
-                                    <div>{{ new Date(track.update_time).toLocaleString() }}</div>
-                                    <div v-if="track.operator.name || track.data.message">
-                                        操作员-{{ track.operator.name }}：{{ track.data.message }}
-                                    </div>
-                        </van-step>
-                    </van-steps>
-                </van-collapse-item>
-            </van-collapse>
-        </van-list>
+      <van-dropdown-menu>
+        <van-raw>
+          <van-col span="6">
+            <van-dropdown-item v-model="timeRange" :options="timeRanges" @change="changeTimeRange" />
+          </van-col>
+          <van-col span="6">
+            <van-dropdown-item v-model="orderState" :options="orderStates" @change="changeOrderState" />
+          </van-col>
+          <!-- <van-col span="10">
+          <van-dropdown-item v-model="sort" :options="sorts" />
+        </van-col> -->
+        </van-raw>
+      </van-dropdown-menu>
 
-        <!--  <van-button type="default" @click="download">下载excel文件</van-button> -->
-        <!--  <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
-            <p>刷新次数: {{ count }}</p>
-        </van-pull-refresh> -->
+      <van-list v-model="loading" :finished="finished" finished-text="-----数据加载结束-----" @load="getMore" :immediate-check="false">
+        <van-collapse v-model="activeNames" accordion>
+          <van-collapse-item :name="rd.id" v-for="(rd, index) in referreds">
+            <van-row slot="title" style="display: flex; align-items: baseline;">
+              <van-col span="10">
+                {{ rd.order.potential_customer.name }}-{{ rd.order.potential_customer.phone }}
+              </van-col>
+              <van-col span="4">
+                <van-tag round>{{ rd.order.carType }}</van-tag>
+              </van-col>
+              <van-col span="10">
+                <van-progress
+                  :percentage="state2num(rd.state)"
+                  stroke-width="8"
+                  color="#f2826a"
+                  :pivot-text="act.get(rd.state)"
+                  :inactive="rd.state=='fail'"
+                ></van-progress>
+              </van-col>
+            </van-row>
+            <van-row gutter="20">
+              <van-col span="6">创建时间：</van-col>
+              <van-col span="18">{{ new Date(rd.tracks[0].update_time).toLocaleString() }}</van-col>
+            </van-row>
+            <van-row gutter="20">
+              <van-col span="6">来源类型：</van-col>
+              <van-col span="18">{{ rd.order.source_type }} </van-col>
+            </van-row>
+            <van-row gutter="20">
+              <van-col span="6">创建人：</van-col>
+              <van-col span="18">
+                {{ rd.tracks[0].data.operator.name }}---{{ rd.tracks[0].data.operator.mobile }}
+              </van-col>
+            </van-row>
+            <van-row gutter="20">
+              <van-col span="6">介绍人：</van-col>
+              <van-col span="18">{{ rd.order.from_customer.name }}---{{ rd.order.from_customer.phone }} </van-col>
+            </van-row>
+            <van-row gutter="20">
+              <van-col span="6">指派顾问：</van-col>
+              <van-col span="12">{{ rd.order.dispatch_employer.name }}</van-col>
+              <van-col span="6">
+                <van-button v-if="!rd.order.dispatch_employer.id" plain type="primary" size="mini" @click="()=>deleteReferred(rd.id)">删除订单</van-button>
+                <!-- <van-button v-if="isAdmin" plain type="primary" size="mini" @click="()=>navTo(rd.id)">修改订单</van-button> -->
+                <!-- <a :href="'./edit-referred.html?rfid='+rd.id+'&op='+operator.id">修改订单</a> -->
+              </van-col>
+            </van-row>
+            <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">订单历史</van-divider>
+            <van-steps direction="vertical" :active="rd.tracks.length-1">
+              <van-step v-for="track in rd.tracks">
+                <div>{{ act.get(track.action) }}</div>
+                <div>{{ new Date(track.update_time).toLocaleString() }}</div>
+                <div v-if="track.operator.name || track.data.message">操作员-{{ track.operator.name }}：{{ track.data.message }}</div>
+              </van-step>
+            </van-steps>
+          </van-collapse-item>
+        </van-collapse>
+      </van-list>
+
+      <!-- <van-button type="default" @click="download">下载excel文件</van-button>
+    <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+      <p>刷新次数: {{ count }}</p>
+    </van-pull-refresh> -->
     </div>
-</body>
-<!-- 引入 Vue 和 Vant 的 JS 文件 -->
-<script type="text/javascript" src="./libs/vue.min.js"></script>
-<script type="text/javascript" src="./libs/vant.min.js"></script>
-<script type="text/javascript" src="./libs/axios.min.js"></script>
-<script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
-<!-- <script type="text/javascript" src="./libs/xlsx.full.min.js"></script> -->
-<script type="text/javascript" src="./libs/common.js"></script>
-<script>
-    Vue.component('my-pop',
-        {
-            data: function () {
-                return {
-                    count: 0
-                };
-            },
-            props: ['title'],
-            template: '<div>aaa</div>'
-        }
-    );
+  </body>
+  <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+  <script type="text/javascript" src="./libs/vue.min.js"></script>
+  <script type="text/javascript" src="./libs/vant.min.js"></script>
+  <script type="text/javascript" src="./libs/axios.min.js"></script>
+  <script type="text/javascript" src="./libs/jweixin-1.2.0.js"></script>
+  <!-- <script type="text/javascript" src="./libs/xlsx.full.min.js"></script> -->
+  <script type="text/javascript" src="./libs/common.js"></script>
+  <script>
+    // const host = 'http://www.all2key.cn';
+    const host = '';
+    Vue.component('my-pop', {
+      data: function () {
+        return {
+          count: 0
+        };
+      },
+      props: ['title'],
+      template: '<div>aaa</div>'
+    });
 
     const app = new Vue({
-        el: "#app",
-        data: {
-            activeNames: [],
-            operator: {},
-            referreds: [],
-            count: 0,
-            isLoading: false,
-            isAdmin: false,
-            popShow: false,
-            timeRange: 'week',
-            orderState: 'all',
-            sort: 0,
-            timeRanges: [
-                { text: '本周', value: "week" },
-                { text: '本月', value: "month" },
-                { text: '本季度', value: "season" },
-                { text: '本年度', value: "year" },
-                { text: '所有时间', value: "all" }
-            ],
-            orderStates: [
-                { text: '所有状态', value: 'all' },
-                { text: '新建信息', value: 'new' },
-                { text: '指派顾问', value: 'dispatched' },
-                { text: '接受指派', value: 'accepted' },
-                { text: '洽谈中', value: 'proceed' },
-                { text: '已订车', value: 'ordered' },
-                { text: '已成交', value: 'success' },
-                { text: '战败', value: 'fail' }
-            ],
-            sorts: [
-                { text: '创建时间排序', value: 0 },
-                { text: '状态更新时间排序', value: 1 },
-            ],
-            editRf: {},
-            loading: false,
-            finished: false,
-            next: false,
-            page: 0
+      el: '#app',
+      data: {
+        activeNames: [],
+        operator: { id: "admin" },
+        referreds: [],
+        count: 0,
+        isLoading: false,
+        isAdmin: false,
+        popShow: false,
+        timeRange: 'week',
+        orderState: 'all',
+        sort: 0,
+        timeRanges: [
+          { text: '本周', value: 'week' },
+          { text: '本月', value: 'month' },
+          { text: '本季度', value: 'season' },
+          { text: '本年度', value: 'year' },
+          { text: '所有时间', value: 'all' }
+        ],
+        orderStates: [
+          { text: '所有状态', value: 'all' },
+          { text: '新建信息', value: 'new' },
+          { text: '指派顾问', value: 'dispatched' },
+          { text: '接受指派', value: 'accepted' },
+          { text: '洽谈中', value: 'proceed' },
+          { text: '已订车', value: 'ordered' },
+          { text: '已成交', value: 'success' },
+          { text: '战败', value: 'fail' }
+        ],
+        sorts: [
+          { text: '创建时间排序', value: 0 },
+          { text: '状态更新时间排序', value: 1 }
+        ],
+        editRf: {},
+        loading: false,
+        finished: false,
+        next: false,
+        page: 0
+      },
+      beforeMount: function () {
+        //this.code = this.$route.query.code;
+        //this.code = window.location.href;
+        getTicket()
+          .then(r => (this.operator = r))
+          .then(r => axios.get(`${host}/yz/referred/get-referreds?op=${this.operator?this.operator.id:null}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=0`))
+          .then(r => {
+            //console.log("referreds: ", r.data.referreds);
+            this.referreds = r.data.referreds;
+            //console.log("this.referreds: ", this.referreds);
+            this.isAdmin = r.data.isAdmin;
+            this.finished = !r.data.next;
+            this.page = r.data.page;
+            //this.editRf = this.referreds[0];
+          })
+          .catch(err => console.log(err));
+      },
+      methods: {
+        closeWindow() {
+          wx.closeWindow();
         },
-        beforeMount: function () {
-            //this.code = this.$route.query.code;
-            //this.code = window.location.href;
-            getTicket()
-                .then(r => this.operator = r)
-                .then(r => axios.get(`/yz/referred/get-referreds?op=${this.operator.id}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=0`))
-                .then(r => {
-                    //console.log("referreds: ", r.data.referreds);
-                    this.referreds = r.data.referreds;
-                    //console.log("this.referreds: ", this.referreds);
-                    this.isAdmin = r.data.isAdmin;
-                    this.finished = !r.data.next;
-                    this.page = r.data.page;
-                    //this.editRf = this.referreds[0];
-                })
-                .catch(err => console.log(err));
+        download() {
+          /* converts an array of JS objects to a worksheet */
+          // const worksheet = XLSX.utils.json_to_sheet({a: 1});
+          // let new_workbook = XLSX.utils.book_new();
+          // XLSX.utils.book_append_sheet(new_workbook, worksheet, "SheetJS");
+          /* output format determined by filename */
+          // XLSX.writeFile(new_workbook, 'out.xlsx');
+          /* at this point, out.xlsb will have been downloaded */
         },
-        methods: {
-            closeWindow() {
-                wx.closeWindow();
-            },
-            download() {
-                /* converts an array of JS objects to a worksheet */
-                // const worksheet = XLSX.utils.json_to_sheet({a: 1});
-                // let new_workbook = XLSX.utils.book_new();
-                // XLSX.utils.book_append_sheet(new_workbook, worksheet, "SheetJS");
-                /* output format determined by filename */
-                // XLSX.writeFile(new_workbook, 'out.xlsx');
-                /* at this point, out.xlsb will have been downloaded */
-            },
-            onRefresh() {
-                setTimeout(() => {
-                    this.$toast('刷新成功');
-                    this.isLoading = false;
-                    this.count++;
-                }, 500);
-            },
-            showPopup(index) {
-                console.log("index: ", index);
-                this.editRf = this.referreds[index];
-                this.popShow = true;
-            },
-            changeTimeRange(value) {
-                console.log(value);
-                this.refesh();
-            },
-            changeOrderState(value) {
-                console.log(value);
-                this.refesh();
-            },
-            refesh() {
-                axios.get(`/yz/referred/get-referreds?op=${this.operator.id}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=0`)
-                    .then(r => {
-                        this.referreds = r.data.referreds;
-                        //console.log("this.referreds: ", this.referreds);
-                        this.isAdmin = r.data.isAdmin;
-                        this.finished = !r.data.next;
-                        this.page = r.data.page;
-                    })
-                    .catch(err => console.log(err));
-            },
-            getMore() {
-                console.log("onLoad()!");
-                //console.log("this.referreds: ", this.referreds);
-                // 异步更新数据
-                axios.get(`/yz/referred/get-referreds?op=${this.operator.id}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=${this.page + 1}`)
-                    .then(r => {
-                        //console.log("data.referreds: ", r.data.referreds);
-                        //this.referreds = r.data.referreds;
-                        this.referreds.push(...r.data.referreds);
-                        //console.log("this.referreds: ", this.referreds);
-                        this.isAdmin = r.data.isAdmin;
-                        this.finished = !r.data.next;
-                        this.page = r.data.page;
-                        //console.log("this.next: ", this.next);
-                        // 加载状态结束
-                        this.loading = false;
-                    })
-                    .catch(err => console.log(err));
-            },
-            navTo(rfid){
-                const url = `./edit-referred.html?rfid=${rfid}&op=${this.operator.id}`;
-                //console.log("navTo: ", url);
-                window.location.href = url;
-            }
+        onRefresh() {
+          setTimeout(() => {
+            this.$toast('刷新成功');
+            this.isLoading = false;
+            this.count++;
+          }, 500);
         },
-        computed: {
-          
+        showPopup(index) {
+          console.log('index: ', index);
+          this.editRf = this.referreds[index];
+          this.popShow = true;
+        },
+        changeTimeRange(value) {
+          console.log(value);
+          this.refresh();
+        },
+        changeOrderState(value) {
+          console.log(value);
+          this.refresh();
+        },
+        refresh() {
+          axios
+            .get(`${host}/yz/referred/get-referreds?op=${this.operator?this.operator.id:null}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=0`)
+            .then(r => {
+              this.referreds = r.data.referreds;
+              //console.log("this.referreds: ", this.referreds);
+              this.isAdmin = r.data.isAdmin;
+              this.finished = !r.data.next;
+              this.page = r.data.page;
+            })
+            .catch(err => console.log(err));
+        },
+        getMore() {
+          console.log('onLoad()!');
+          //console.log("this.referreds: ", this.referreds);
+          // 异步更新数据
+          axios
+            .get(`/yz/referred/get-referreds?op=${this.operator.id}&timeRange=${this.timeRange}&orderState=${this.orderState}&page=${this.page + 1}`)
+            .then(r => {
+              //console.log("data.referreds: ", r.data.referreds);
+              //this.referreds = r.data.referreds;
+              this.referreds.push(...r.data.referreds);
+              //console.log("this.referreds: ", this.referreds);
+              this.isAdmin = r.data.isAdmin;
+              this.finished = !r.data.next;
+              this.page = r.data.page;
+              //console.log("this.next: ", this.next);
+              // 加载状态结束
+              this.loading = false;
+            })
+            .catch(err => console.log(err));
+        },
+        navTo(rfid) {
+          const url = `./edit-referred.html?rfid=${rfid}&op=${this.operator.id}`;
+          //console.log("navTo: ", url);
+          window.location.href = url;
+        },
+        deleteReferred(rfid) {
+          axios
+            .get(`/yz/referred/delete-referred?rfid=${rfid}&op=${this.operator.id}`)
+            .then(getResData('deleteReferred: '))
+            .then(this.refresh)
+            .catch(err => console.log(err));
         }
+      },
+      computed: {}
     });
-</script>
-
+  </script>
 </html>

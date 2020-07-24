@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const http = require('http');
 const xmlparser = require('express-xml-bodyparser');
 const axios = require('axios');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 //const https = require('https');
 //const fs = require('fs');
 const cors = require('cors');
@@ -20,10 +19,11 @@ global.config = config = require('./config.json');
 const schedule = require('node-schedule');
 const j1 = scheduleAxiosGet('*/1 8-18 * * *', 'http://localhost/yz/referred/cron/minute5');
 const j2 = scheduleAxiosGet({ hour: [9, 17], minute: 0 }, 'http://localhost/yz/referred/cron/everyday');
-// if (global.config.debug) {
-//   j1.cancel();
-//   j2.cancel();
-// }
+
+if (global.config.debug) {
+  j1.cancel();
+  j2.cancel();
+}
 
 // 载入自定义模块
 
@@ -49,27 +49,13 @@ app.use(express.static('public'));
 const routerYz = require('./routers/yz')(express);
 app.use('/yz', initDb(config.crmDbUrl), routerYz);
 
-// const routerExam = require('./routers/exam');
-// app.use('/exam', routerExam);
-
-// const routerReimburse = require('./routers/reimburse');
-const apiProxyReimburse = createProxyMiddleware('http://localhost:3001');
-app.use('/reimburse', apiProxyReimburse);
-
-const apiProxyRace = createProxyMiddleware('http://localhost:3000');
-app.use(
-  '/race',
-  // (req, res, next) => {
-  //   console.log('req.body: ', req.body);
-  //   next();
-  // },
-  apiProxyRace
-);
+const routerExam = require('./routers/exam');
+app.use('/exam', routerExam);
 
 // 监听服务端口
 httpServer.on('error', onError);
 httpServer.on('listening', onListening);
-httpServer.listen(config.httpPort);
+httpServer.listen(8080);
 
 function scheduleAxiosGet(dateParams, url) {
   const job = schedule.scheduleJob(dateParams, function (date) {

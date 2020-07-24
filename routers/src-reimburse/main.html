@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.8/lib/index.css" />
+    <title>谊众远程报账系统</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <div v-for="(value, name) in operator">
+        {{ name }}: {{ value }}
+      </div>
+      <div><button @click="thirdPartyOpenPage">AAA</button></div>
+    </div>
+
+    <!--startprint-->
+    <div><h1>这里可以打印！</h1></div>
+    <!--endprint-->
+    <div><button onclick="doPrint();">print</button></div>
+  </body>
+  <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+  <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vant@2.8/lib/vant.min.js"></script> -->
+  <script type="text/javascript" src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+  <!-- <script type="text/javascript" src="./util.js"></script> -->
+  <script>
+    //const routes = [];
+    //const router = new VueRouter({ mode: 'history', routes });
+    const corpID = 'ww29233ad949e808bf';
+
+    const app = new Vue({
+      el: '#app',
+      data: {
+        operator: {}
+      },
+      beforeMount: function () {
+        login(['thirdPartyOpenPage'])
+          // operate = { id, name, mobile }
+          .then(log('login(): '))
+          .then(r => {
+            this.operator = r;
+          })
+          .catch(err => console.log(err));
+      },
+      methods: {
+        answer() {
+          // send data to server
+          return axios
+            .get('/exam/answer', { params: this.answers })
+            .then(r => vant.Toast.success(r.data.msg))
+            .then(r => setTimeout(wx.closeWindow, 2000))
+            .catch(err => vant.Toast.fail('信息创建失败！'));
+        },
+        enterpriseVerify() {
+          wx.invoke('enterpriseVerify', {}, function (res) {
+            console.log(res);
+          });
+        },
+        chooseInvoice() {
+          wx.invoke(
+            'chooseInvoice',
+            {
+              timestamp: '', // 卡券签名时间戳
+              nonceStr: '', // 卡券签名随机串
+              signType: '', // 签名方式，默认'SHA1'
+              cardSign: '' // 卡券签名
+            },
+            function (res) {
+              // 这里是回调函数
+              alert(JSON.stringify(res)); // 返回的结果
+            }
+          );
+        },
+        openUserProfile() {
+          wx.invoke(
+            'openUserProfile',
+            {
+              type: 1, //1表示该userid是企业成员，2表示该userid是外部联系人
+              userid: this.operator.userid //可以是企业成员，也可以是外部联系人
+            },
+            function (res) {
+              if (res.err_msg != 'openUserProfile:ok') {
+                //错误处理
+              }
+            }
+          );
+        },
+        thirdPartyOpenPage() {
+          wx.invoke(
+            'thirdPartyOpenPage',
+            {
+              oaType: '10001', // String
+              templateId: '1970325015986517_1688850526274768_1908723337_1505486409', // String
+              thirdNo: randomString(), // String
+              extData: {}
+            },
+            function (res) {
+              // 输出接口的回调信息
+              console.log(res);
+            }
+          );
+        }
+      }
+    });
+
+    function login(api = []) {
+      return axios
+        .get(`/reimburse/api/get-user?url=${encodeURIComponent(window.location.href)}`)
+        .then(res => {
+          const ticket = res.data.content.sign;
+          console.log(res.data);
+          if (api) {
+            wx.config({
+              beta: true, // 必须这么写，否则wx.invoke调用形式的jsapi会有问题
+              debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+              appId: corpID, // 必填，企业微信的corpID
+              timestamp: ticket.timestamp, // 必填，生成签名的时间戳
+              nonceStr: ticket.nonceStr, // 必填，生成签名的随机串
+              signature: ticket.signature, // 必填，签名，见 附录-JS-SDK使用权限签名算法
+              jsApiList: api // 必填，需要使用的JS接口列表，凡是要调用的接口都需要传进来
+            });
+          }
+          return res.data.content.user;
+        })
+        .catch(err => console.log(err));
+    }
+
+    function log(title) {
+      return function (r) {
+        console.log(title, r);
+        return Promise.resolve(r);
+      };
+    }
+
+    function doPrint() {
+      console.log('doPrint()');
+      bodyHtml = window.document.body.innerHTML;
+      sPrintStr = '<!--startprint-->'; //开始打印标识字符串有17个字符
+      ePrintStr = '<!--endprint-->'; //结束打印标识字符串
+      printHtml = bodyHtml.substr(bodyHtml.indexOf(sPrintStr) + 17); //从开始打印标识之后的内容
+      printHtml = printHtml.substring(0, printHtml.indexOf(ePrintStr)); //截取开始标识和结束标识之间的内容
+      window.document.body.innerHTML = printHtml; //把需要打印的指定内容赋给body.innerHTML
+      window.print(); //调用浏览器的打印功能打印指定区域
+      window.document.body.innerHTML = bodyHtml; //重新给页面内容赋值；
+    }
+
+    function randomString(length = 8) {
+      const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
+      for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+      return result;
+    }
+  </script>
+</html>
